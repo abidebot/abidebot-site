@@ -23,9 +23,9 @@ window.ABIDEBOT_PRICING = {
     },
     {
       id: "developer", name: "Developer box", hkd: 78, usd: 10,
-      desc: "A hosted box that sleeps between jobs. For developers and trials.",
+      desc: "A hosted munuOS machine that sleeps between jobs. For developers and trials.",
       features: [
-        "Private hosted box, one per customer",
+        "Private hosted munuOS machine, one per customer",
         "Sleeps when idle, wakes for scheduled jobs",
         "Prepaid AI usage (see below)",
         "Community support"
