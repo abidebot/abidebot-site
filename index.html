@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>AbideBot: software your AI can actually use</title>
-<meta name="description" content="AbideBot's agent is designed to work inside your apps directly, reading and acting on them as a first-class user, with no screenshots. Built on munu: an always-on box, a browser your agent drives, and a planned network of live, verified dataflow. Developer beta planned for around February 2027.">
+<meta name="description" content="Your agent is designed to read what an app shows and fill in the values the app is waiting for, with no screenshots and no clicking. Apps are written in munu, run on munu-box, an always-on harness, and appear in munu-bot, the browser. Developer beta planned for around February 2027.">
 <meta property="og:title" content="AbideBot: software your AI can actually use">
-<meta property="og:description" content="AbideBot's agent is designed to work inside your apps directly, reading and acting on them as a first-class user, with no screenshots. Built on munu: an always-on box, a browser your agent drives, and a planned network of live, verified dataflow. Developer beta planned for around February 2027.">
+<meta property="og:description" content="Your agent is designed to read what an app shows and fill in the values the app is waiting for, with no screenshots and no clicking. Apps are written in munu, run on munu-box, an always-on harness, and appear in munu-bot, the browser. Developer beta planned for around February 2027.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://abidebot.com/">
 <meta name="theme-color" content="#07080d">
@@ -37,7 +37,7 @@
     <div>
       <span class="pill"><span class="dot"></span>Beta for developers planned for around February 2027</span>
       <h1>Software <span class="grad hl2">your AI can actually use.</span></h1>
-      <p class="lead">AbideBot's agent is designed to work inside your apps directly, reading and acting on them as a first-class user. No screenshots, no guesswork. Built on munu: an always-on box, a browser your agent drives, and a planned network of live, verified dataflow.</p>
+      <p class="lead">Your agent is designed to read what an app shows and fill in the values the app is waiting for, just as your own input does. No screenshots, no clicking. Apps are written in munu, run on munu-box, an always-on harness, and appear in munu-bot, the browser.</p>
       <div class="cta-row">
         <a class="btn btn-primary" href="#early-access">Join the beta waitlist &rarr;</a>
         <a class="btn btn-ghost" href="#self-host">Self-host free <span class="tag soon">Planned</span></a>
@@ -57,12 +57,12 @@
         <div class="mock-main">
           <div class="msg you">Dude, confirm tomorrow&rsquo;s bookings and tell me if any clash.</div>
           <div class="msg bot"><span class="status">reading the scene</span><br>Bookings has 4 rows for tomorrow. Rows 2 and 3 share the 10:00 slot.</div>
-          <div class="scene-ev"><div><span class="ev-k">read</span> Bookings &rsaquo; Table &rsaquo; Row 3</div><div><span class="ev-k">event</span> press &ldquo;Confirm&rdquo; on rows 1 and 4</div><div><span class="ev-k">wait</span> rows 2 and 3 for you</div></div>
+          <div class="scene-ev"><div><span class="ev-k">read</span> Bookings &rsaquo; Table &rsaquo; Row 3</div><div><span class="ev-k">bind</span> confirm = rows 1 and 4</div><div><span class="ev-k">wait</span> keep_10am: unbound, for you</div></div>
           <div class="approve"><b>Waiting for you: which booking keeps 10:00?</b><div class="row"><span class="y">Row 2</span><span>Row 3</span><span>Ask both</span></div></div>
         </div>
       </div>
     </div>
-    <figcaption class="mock-cap">Illustration of the planned browser: the agent reads the app&rsquo;s scene and sends events. No screenshots.</figcaption>
+    <figcaption class="mock-cap">Illustration of the planned browser: the agent reads the app&rsquo;s scene and binds the variables the app is waiting on. No screenshots, no clicking.</figcaption>
     </figure>
   </div>
 </section>
@@ -72,21 +72,21 @@
     <div class="head center">
       <div class="eyebrow">The three parts</div>
       <h2>A box, a browser and a network, <span class="grad">all written in munu.</span></h2>
-      <p class="sub">munu is the programming language and runtime underneath AbideBot. Your agent writes it, the box runs it, and the browser and network are designed to speak nothing else.</p>
+      <p class="sub">munu is the programming language AbideBot is written in. Your agent writes munu programs, munu-box runs them and munu-bot shows them. The network is planned to carry munu data too.</p>
     </div>
     <div class="grid g3 parts">
       <div class="card part">
         <div class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></div>
         <h3>The box <span class="tag soon">In development</span></h3>
         <p class="part-sub">munu-box: a computer that does not sleep.</p>
-        <p>An always-on virtual machine where munu is the first and only program the system starts. One per customer, never shared. Rent one hosted by us, or run it on your own hardware.</p>
+        <p>The always-on, headless harness that runs your munu programs and your agent. A virtual machine with no usual operating system underneath, one per customer, never shared. Rent one hosted by us, or run it on your own hardware.</p>
         <ul class="mini"><li>Your agent, its memory and its jobs live here</li><li>Changes go live only after they compile and pass their checks</li><li>A protected core that boots with only the essentials</li></ul>
       </div>
       <div class="card part">
         <div class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M7 13h4M7 16h7"/></svg></div>
         <h3>The browser <span class="tag soon">In development</span></h3>
         <p class="part-sub">munu-bot: apps as scenes, not pages.</p>
-        <p>The browser draws munu apps from a scene graph instead of rendering web pages. Because a scene is plain data, your agent is designed to use apps directly, as a first-class user: it reads the scene and sends events, where other agents take screenshots and guess.</p>
+        <p>The browser draws munu apps from scenes instead of rendering web pages. A scene is plain data, so your agent is designed to use apps directly, as a first-class user: it reads the scene and binds the variables the app is waiting on, where other agents take screenshots and guess.</p>
         <ul class="mini"><li>It does not render ordinary HTML websites</li><li>You and your agent see the same app</li><li>Risky steps wait for your approval</li></ul>
       </div>
       <div class="card part">
@@ -108,7 +108,7 @@
       <p class="sub">Most AI agents are bolted onto software made for people. AbideBot is designed the other way round.</p>
     </div>
     <div class="grid g2">
-      <div class="card"><div class="ico"><svg viewBox="0 0 24 24"><path d="M4 4l7 16 2-7 7-2z"/></svg></div><h3>It uses apps directly <span class="tag soon">Designed for</span></h3><p>An app in the browser is a scene: a tree of values the agent can read. It is designed to read exactly what is on screen and press the right control by name, with no screenshots, no pixel guessing and no scraping. That is also designed to need far fewer AI calls than reading images, though we will publish benchmarks before we claim savings.</p></div>
+      <div class="card"><div class="ico"><svg viewBox="0 0 24 24"><path d="M4 4l7 16 2-7 7-2z"/></svg></div><h3>It uses apps directly <span class="tag soon">Designed for</span></h3><p>An app in the browser is a scene: a tree of values the agent can read. It is designed to read exactly what is on screen and fill in the value a control is waiting for, by name, with no screenshots, no pixel guessing and no scraping. That is also designed to need far fewer AI calls than reading images, though we will publish benchmarks before we claim savings.</p></div>
       <div class="card"><div class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div><h3>It stays on <span class="tag soon">Designed for</span></h3><p>The box is designed to run all the time, so routines, watches and replies keep going when your laptop is shut. When a part fails, the box restarts it by the rule written in its code, and a bad change rolls back to the last good one.</p></div>
       <div class="card"><div class="ico"><svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></svg></div><h3>Its code is checked before it runs</h3><p>Dude writes small munu programs for your tasks. The compiler rejects a missing case, a recovery rule for a failure that can never happen, or two parts that disagree about a value&rsquo;s type, and the error goes back to the agent to fix. <a class="inl" href="munu.html#language">See the real code &rarr;</a></p></div>
       <div class="card"><div class="ico"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h7"/><circle cx="18" cy="16" r="3"/></svg></div><h3>Rules and deadlines live in the code</h3><p>How each part recovers, how fast it must answer and where order may vary are written in the program itself, as formulas the compiler turns into checks. The box is designed to measure every run against its deadline and report a miss, not hide it.</p></div>
@@ -207,7 +207,7 @@
   <div class="wrap">
     <div class="head center"><div class="eyebrow">FAQ</div><h2>Questions, answered calmly</h2></div>
     <div class="faq">
-      <details><summary>What is munu?</summary><p>munu is the programming language and runtime AbideBot is built on. Programs are made of finite functions (<code>mu</code>) and ongoing streams (<code>nu</code>), grouped into contracts that state their own recovery rules and deadlines. The box runs munu, the browser draws munu apps, and the network is designed to carry munu data. <a class="inl" href="munu.html">More for developers &rarr;</a></p></details>
+      <details><summary>What is munu?</summary><p>munu is the programming language AbideBot is written in. Programs are made of finite functions (<code>mu</code>) and ongoing streams (<code>nu</code>), grouped into contracts that state their own recovery rules and deadlines. munu-box runs munu programs, munu-bot draws munu apps, and the network is designed to carry munu data. <a class="inl" href="munu.html">More for developers &rarr;</a></p></details>
       <details><summary>Do I need to learn munu to use AbideBot?</summary><p>No. You ask Dude in plain words and it writes the munu. Learning munu is for people who want to build their own apps for the network.</p></details>
       <details><summary>Is the browser a web browser?</summary><p>No. It does not render ordinary HTML websites. It is designed for munu apps and sites, drawn from a scene graph your agent can read and act on directly.</p></details>
       <details><summary>Do I host it myself, or rent a box?</summary><p>Either. You are planned to be able to run the box free on your own hardware, or rent one hosted by us on a monthly plan. Both run the same box image. Firms that host it themselves can add paid support. Self-hosting is planned, and the code is not public yet. Join the waitlist and we will tell you when it is.</p></details>
@@ -240,7 +240,7 @@
 
 <footer>
   <div class="wrap">
-    <div><a class="brand" href="index.html"><img src="assets/favicon.svg" alt="">AbideBot</a><p style="margin-top:10px">It abides. Built on munu. &copy; <span id="yr">2026</span> AbideBot. All rights reserved.</p></div>
+    <div><a class="brand" href="index.html"><img src="assets/favicon.svg" alt="">AbideBot</a><p style="margin-top:10px">It abides. Written in munu. &copy; <span id="yr">2026</span> AbideBot. All rights reserved.</p></div>
     <nav><a href="#parts">Product</a><a href="munu.html">munu</a><a href="#pricing">Pricing</a><a href="#faq">FAQ</a><a href="mailto:hello@abidebot.com">Contact</a></nav>
   </div>
 </footer>
