@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>munu for developers · AbideBot</title>
+<meta name="description" content="munu is the language and runtime AbideBot is built on: mu and nu functions, contracts with mu-calculus supervision, ports, psi-terms, single-assignment dataflow and hyperbolic routing. Real excerpts from the source.">
+<meta property="og:title" content="munu for developers · AbideBot">
+<meta property="og:description" content="munu is the language and runtime AbideBot is built on: mu and nu functions, contracts with mu-calculus supervision, ports, psi-terms, single-assignment dataflow and hyperbolic routing. Real excerpts from the source.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://abidebot.com/munu.html">
+<meta name="theme-color" content="#07080d">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="index.html"><img src="assets/favicon.svg" alt="">AbideBot</a>
+    <button class="menu-btn" aria-label="Open menu" aria-expanded="false">&#9776;</button>
+    <nav class="links">
+      <a href="index.html#parts">The three parts</a>
+      <a href="index.html#different">Why it&rsquo;s different</a>
+      <a href="index.html#roadmap">Roadmap</a>
+      <a href="index.html#pricing">Pricing</a>
+      <a href="index.html#faq">FAQ</a>
+      <a href="munu.html" aria-current="page">munu for developers</a>
+      <a class="btn btn-primary" href="index.html#early-access">Join the beta waitlist</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<section class="page-hero dev-hero"><div class="wrap">
+<div class="eyebrow">For developers</div>
+<h1>munu: the language <span class="grad">AbideBot runs on.</span></h1>
+<p class="sub">munu is a language and runtime for programs that have to keep running and be checked before they do. Functions are finite (<code>mu</code>) or ongoing (<code>nu</code>). Programs are contracts that carry their own recovery rules and deadlines. Shared state is single-assignment dataflow over psi-terms, and the network that will carry it is designed around hyperbolic routing. Everything on this page is a real excerpt from munu&rsquo;s source and compiler tests, unless it says planned.</p>
+<div class="cta-row" style="justify-content:center;margin-top:28px"><a class="btn btn-primary" href="index.html#early-access">Join the developer beta waitlist &rarr;</a><a class="btn btn-ghost" href="index.html#self-host">Self-host free <span class="tag soon">Planned</span></a></div>
+<p class="note">The munu source, docs and tooling are not public yet. They are planned to open with the beta, around February 2027.</p>
+</div></section>
+<section style="padding-top:30px" id="concepts"><div class="wrap"><div class="grid g4 concepts"><a class="card concept" href="#model-native"><h3>mu and nu</h3><p>Finite functions and ongoing streams, told apart by their first word.</p></a><a class="card concept" href="#language"><h3>Contracts and supervision</h3><p>Recovery rules written as mu-calculus formulas, checked at compile time.</p></a><a class="card concept" href="#ports"><h3>Ports</h3><p>The one declared place where message order can vary.</p></a><a class="card concept" href="#psi"><h3>Psi-terms</h3><p>Shared structures that several parties fill in, with conflicts caught.</p></a><a class="card concept" href="#dataflow"><h3>Dataflow and scenes</h3><p>Variables filled once, waited on, and screens as plain values.</p></a><a class="card concept" href="#memory"><h3>Facts and history</h3><p>Typed facts, transactions, and queries as of a past moment.</p></a><a class="card concept" href="#routing"><h3>Hyperbolic routing</h3><p>Greedy routing on a curved map, for a network with no central directory.</p></a><a class="card concept" href="#architecture"><h3>Box, browser, network</h3><p>How the three parts of AbideBot fit around munu.</p></a></div></div></section>
+<section id="model-native" class="alt"><div class="wrap"><div class="head center"><div class="eyebrow">mu and nu</div><h2>Shaped for <span class="grad">the model that writes it.</span></h2><p class="sub">munu is designed to be written mostly by an AI agent and read by people. The syntax is built for that: finite and ongoing functions are told apart up front, functions are tables of cases, and rules come before the body.</p></div><span id="transformer" class="anchor"></span><div class="xrows"><div class="xrow"><pre class="xcode" tabindex="0"><code><span class="k">nu</span> trigger_loop(state: <span class="t">TriggerState</span>, stream: [<span class="t">OscMessage</span>]) <span class="o">-&gt;</span> [<span class="t">TriggerSnapshot</span>]
+  <span class="k">step</span> (prev, next) next.generation <span class="o">&gt;=</span> prev.generation
+{
+    _, [] <span class="o">=&gt;</span> [],
+    state, [msg <span class="o">|</span> rest] <span class="o">=&gt;</span> {
+        <span class="k">let</span> it <span class="o">=</span> trigger_step(state, msg);
+        [it.snap <span class="o">|</span> trigger_loop(it.state, rest)]
+    },
+}</code></pre><div class="xtxt"><span class="xtag">No mutation</span><h3>State is passed along, not changed</h3><p>Each message produces a new state, which is handed to the next call as an argument. munu has no mutable variables, loops or compound assignment, so a value on a line is whatever was passed in on that line, and a model never has to replay earlier lines to work out what a variable holds now.</p></div></div><div class="xrow"><pre class="xcode" tabindex="0"><code><span class="k">mu</span> values_list_equal(xs: [<span class="t">i64</span>], ys: [<span class="t">i64</span>]) <span class="o">-&gt;</span> <span class="t">bool</span> <span class="k">decreases</span> xs
+{
+    [], [] <span class="o">=&gt;</span> <span class="k">true</span>,
+    [], _ <span class="o">=&gt;</span> <span class="k">false</span>,
+    _, [] <span class="o">=&gt;</span> <span class="k">false</span>,
+    [x <span class="o">|</span> rest_x], [y <span class="o">|</span> rest_y] <span class="o">=&gt;</span> <span class="k">if</span> eq_i64(x, y) { values_list_equal(rest_x, rest_y) } <span class="k">else</span> { <span class="k">false</span> }
+}</code></pre><div class="xtxt"><span class="xtag">A function is a table</span><h3>Cases on the left, results on the right</h3><p>The body is a list of cases: input patterns, then <span class="arrow">=&gt;</span>, then the result, one case per line. Each new row repeats the shape of the row above it, which is the kind of regular text a model continues well.</p></div></div><div class="xrow"><pre class="xcode" tabindex="0"><code><span class="k">mu</span> list_len(bins: [<span class="t">i64</span>]) <span class="o">-&gt;</span> <span class="t">i64</span> <span class="k">ensures</span> (r) r <span class="o">&gt;=</span> <span class="n">0i64</span> <span class="k">decreases</span> bins {
+    [] <span class="o">=&gt;</span> <span class="n">0i64</span>,
+    [_ <span class="o">|</span> tail] <span class="o">=&gt;</span> <span class="n">1i64</span> <span class="o">+</span> list_len(tail)
+}
+
+<span class="k">nu</span> countdown_stream(n: <span class="t">u64</span>) <span class="o">-&gt;</span> [<span class="t">u64</span>] {
+    <span class="n">0u64</span> <span class="o">=&gt;</span> [],
+    n <span class="o">=&gt;</span> [n <span class="o">|</span> countdown_stream(n <span class="o">-</span> <span class="n">1u64</span>)]
+}</code></pre><div class="xtxt"><span class="xtag">Finite or ongoing</span><h3>The first word says which rule applies</h3><p>The first function is finite and must state why its recursion stops (<span class="kwd">decreases</span>). The second returns a stream and is checked to keep producing. The kind of function is fixed by its first keyword, before the model writes anything else.</p></div></div><div class="xrow"><pre class="xcode" tabindex="0"><code><span class="k">pub</span> <span class="k">enum</span> <span class="t">FlexDirection</span> { <span class="t">Row</span>, <span class="t">Col</span> }
+<span class="k">pub</span> <span class="k">enum</span> <span class="t">FlexJustify</span> { <span class="t">Start</span>, <span class="t">End</span>, <span class="t">Center</span>, <span class="t">SpaceBetween</span> }
+<span class="k">pub</span> <span class="k">enum</span> <span class="t">FlexAlign</span> { <span class="t">Start</span>, <span class="t">End</span>, <span class="t">Center</span>, <span class="t">Stretch</span> }
+
+<span class="k">pub</span> <span class="k">enum</span> <span class="t">GridTrack</span> {
+    <span class="t">Fixed</span> { px: <span class="t">f64</span> },
+    <span class="t">Fr</span> { weight: <span class="t">f64</span> },
+    <span class="t">Auto</span>,
+}</code></pre><div class="xtxt"><span class="xtag">Familiar forms</span><h3>Written the way common code is written</h3><p>Enums, structs, typed fields and braces look the way they do in widely used languages, and list patterns such as <span class="kwd">[head | tail]</span> follow a long-standing convention. In our measurements 50 of the 54 keywords are single tokens in widely used tokenizers.</p></div></div><div class="xrow"><pre class="xcode" tabindex="0"><code><span class="k">mu</span> ring_truncate(list: [<span class="t">Histogram</span>], k: <span class="t">i64</span>) <span class="o">-&gt;</span> [<span class="t">Histogram</span>]
+  <span class="k">requires</span> (k <span class="o">&gt;=</span> <span class="n">0i64</span>)
+  <span class="k">ensures</span> (r) hist_list_len(r) <span class="o">&lt;=</span> k
+  <span class="k">decreases</span> list
+{
+    [], _ <span class="o">=&gt;</span> [],
+    [_ <span class="o">|</span> _], <span class="n">0i64</span> <span class="o">=&gt;</span> [],
+    [head <span class="o">|</span> tail], k <span class="o">=&gt;</span> [head <span class="o">|</span> ring_truncate(tail, k <span class="o">-</span> <span class="n">1i64</span>)]
+}</code></pre><div class="xtxt"><span class="xtag">Rules before the body</span><h3>Requirements, guarantees and the stopping rule come first</h3><p>What the input must satisfy, what the result promises and why the recursion ends are written before the body, in a fixed order. Writing left to right, a model has read every constraint before it writes the first case.</p></div></div><div class="xrow"><pre class="xcode" tabindex="0"><code><span class="k">let</span> bound_var <span class="o">=</span> <span class="t">DataflowVariable</span> { state: <span class="n">3u64</span>, value: <span class="t">Some</span>(value), <span class="o">..</span>old_var };
+<span class="k">let</span> new_vars <span class="o">=</span> hashmap_insert(dm.variables, canonical_id, bound_var);
+<span class="k">let</span> dm2 <span class="o">=</span> <span class="t">DataflowManager</span> { variables: new_vars, <span class="o">..</span>dm };
+<span class="k">let</span> dm3 <span class="o">=</span> <span class="k">match</span> dm2.gc_state {
+    <span class="t">GcState</span>::<span class="t">RootScan</span>   <span class="o">=&gt;</span> fold_value_into_marks(value, dm2),
+    <span class="t">GcState</span>::<span class="t">Transitive</span> <span class="o">=&gt;</span> fold_value_into_marks(value, dm2),
+    <span class="t">GcState</span>::<span class="t">Idle</span>       <span class="o">=&gt;</span> dm2,
+    <span class="t">GcState</span>::<span class="t">Sweep</span>      <span class="o">=&gt;</span> dm2,
+    <span class="t">GcState</span>::<span class="t">Compact</span>    <span class="o">=&gt;</span> dm2
+};
+<span class="t">DmU64</span> { dm: dm3, val: canonical_id }</code></pre><div class="xtxt"><span class="xtag">Updates build new values</span><h3>A record is copied with changes, not edited</h3><p>The new variable is built from the old one with a few fields replaced (<span class="kwd">..old_var</span>), and the result is returned as a new value. The match that follows lists all five states with no catch-all case.</p></div></div><div class="xrow"><pre class="xcode" tabindex="0"><code><span class="k">pub</span> <span class="k">enum</span> <span class="t">Event</span> {
+    <span class="t">Click</span> { name: <span class="t">string</span> },
+    <span class="t">None</span>,
+}
+<span class="k">mu</span> handle(e: <span class="t">Event</span>) <span class="o">-&gt;</span> <span class="t">i64</span> {
+    <span class="t">Event</span>::<span class="t">Click</span> { name } <span class="o">=&gt;</span> <span class="n">1i64</span>,
+}</code></pre><div class="xtxt"><span class="xtag">Every case is covered</span><h3>A missing case is a compile error</h3><p>This is from a compiler test. The <span class="kwd">None</span> case has no row, so the program is rejected as a non-exhaustive match. With no loop, return, break or try keywords either, every path a function can take is one of its listed cases.</p></div></div><div class="xrow"><pre class="xcode" tabindex="0"><code><span class="k">mu</span> f(x: <span class="t">u64</span>) <span class="o">-&gt;</span> <span class="t">u64</span> { x <span class="o">=&gt;</span> { <span class="k">let</span> y: <span class="t">u64</span>; y <span class="o">=</span> x; y } }</code></pre><div class="xtxt"><span class="xtag">Typed blanks</span><h3>A name can be declared with its type and no value</h3><p>From a parser test: a <span class="kwd">let</span> with a type and no value declares a blank, and the next statement gives it its value. Whatever fills the blank already has a type to fit.</p></div></div><p class="tmap-note">The honest picture: most functions in the source have a single case, and the multi-case tables above are the minority. Effects such as receiving a message happen through calls, not through syntax. In our own tests the language is not more compact than mainstream languages. Its advantage is structure, not size.</p></div></section>
+<section id="language"><div class="wrap"><div class="head center"><div class="eyebrow">Contracts and supervision</div><h2>Recovery is <span class="grad">part of the program.</span></h2><p class="sub">A contract is munu&rsquo;s unit of work, supervision and security. How it recovers and how fast it must answer are written as mu-calculus formulas and constants in the code, and the compiler turns them into checks.</p></div><div class="xrows"><div class="xrow"><pre class="xcode" tabindex="0"><code><span class="k">formula</span> permanent() {
+    <span class="k">nu</span> <span class="t">X</span>. [fail(self, _)] <span class="o">&lt;</span>restart(self)<span class="o">&gt;</span> <span class="t">X</span> <span class="k">and</span> [_] <span class="t">X</span>
+}
+
+<span class="k">pub</span> <span class="k">contract</span> <span class="t">EventPump</span>() <span class="o">-&gt;</span> [<span class="t">i64</span>]
+    <span class="k">substrate</span> { bytecode }
+    <span class="k">behaviour</span> { <span class="k">do</span>: permanent() <span class="k">must</span>: permanent() }
+{ pump_events() }</code></pre><div class="xtxt"><span class="xtag">Supervision strategy</span><h3>How a bot recovers is written down, not configured</h3><p>The recovery rule is a mu-calculus formula: on any failure, restart, and keep doing that for as long as the component runs. Each component names its rule in its header (<span class="kwd">do:</span> is what it does, <span class="kwd">must:</span> is what it is held to), and the compiler turns the formula into a state machine at build time.</p></div></div><div class="xrow"><pre class="xcode" tabindex="0"><code><span class="k">pub</span> <span class="k">contract</span> <span class="t">Supervisor</span>(x: <span class="t">u64</span>) <span class="o">-&gt;</span> [<span class="t">u64</span>]
+    <span class="k">substrate</span> { bytecode }
+    <span class="k">behaviour</span> {
+        <span class="k">do</span>: <span class="k">nu</span> <span class="t">X</span>. [fail(left, <span class="t">Failure</span>::<span class="t">Lost</span>)] <span class="o">&lt;</span>restart(left)<span class="o">&gt;</span> <span class="t">X</span>
+                  <span class="k">and</span> [done(left)] <span class="o">&lt;</span>absorb(left)<span class="o">&gt;</span> <span class="t">X</span>
+                  <span class="k">and</span> [_] <span class="t">X</span>
+        <span class="k">must</span>: <span class="k">nu</span> <span class="t">X</span>. [fail(<span class="o">!</span>self, _)]<span class="o">~</span>deadline(<span class="t">RESPONSE_MUST</span>) <span class="t">X</span>
+    }
+    <span class="k">children</span> { left: <span class="t">Worker</span> }</code></pre><div class="xtxt"><span class="xtag">Recovery per cause</span><h3>Different failures get different answers</h3><p>A supervisor lists its children and answers each kind of failure on its own line: restart the child on one cause, absorb a child that has finished, and be held to answering a child&rsquo;s failure within a stated deadline. This is from a compiler test, which also checks the other side: an answer to a failure the child can never raise is refused at compile time, so there is no dead recovery code.</p></div></div><div class="xrow"><pre class="xcode" tabindex="0"><code><span class="k">pub</span> <span class="k">enum</span> <span class="t">FetchFailure</span> { <span class="t">EndedWithoutObject</span> }
+
+<span class="k">pub</span> <span class="k">mu</span> first_object(objects: [<span class="t">u64</span>]) <span class="o">-&gt;</span> <span class="t">u64</span> {
+    [] <span class="o">=&gt;</span> <span class="k">crash</span> <span class="t">FetchFailure</span>::<span class="t">EndedWithoutObject</span>,
+    [object <span class="o">|</span> rest] <span class="o">=&gt;</span> object
+}</code></pre><div class="xtxt"><span class="xtag">Typed failures</span><h3>A failure has a name and a type</h3><p>Failures are declared like any other type and raised with <span class="kwd">crash</span>. The reason travels to the supervisor, which is what lets recovery rules match on the cause instead of on a log line.</p></div></div><div class="xrow"><pre class="xcode" tabindex="0"><code><span class="k">cdf</span> <span class="t">FETCH_DO</span> <span class="o">=</span> <span class="n">2s</span>
+<span class="k">cdf</span> <span class="t">FETCH_MUST</span> <span class="o">=</span> <span class="n">30s</span>
+
+<span class="k">pub</span> <span class="k">contract</span> <span class="t">Fetcher</span>(anchor_key: <span class="t">u64</span>, commitment: <span class="t">string</span>, size: <span class="t">i64</span>) <span class="o">-&gt;</span> [<span class="t">u64</span>]
+    <span class="k">substrate</span> { bytecode }
+    <span class="k">behaviour</span> {
+        <span class="k">do</span>: <span class="k">nu</span> <span class="t">X</span>. [_]<span class="o">~</span>deadline(<span class="t">FETCH_DO</span>) <span class="t">X</span>
+        <span class="k">must</span>: <span class="k">nu</span> <span class="t">X</span>. [_]<span class="o">~</span>deadline(<span class="t">FETCH_MUST</span>) <span class="t">X</span>
+    }
+{ fetch_and_arrive(anchor_key, commitment, size) }</code></pre><div class="xtxt"><span class="xtag">Response time in the code</span><h3>Deadlines sit next to the logic they cover</h3><p>Each component states a target time and a hard limit for its steps (<span class="kwd">~deadline</span>). The limits are declared as named constants, so the numbers you hold a bot to live in the same file as the code that has to meet them.</p></div></div></div><p class="tmap-note">Excerpts are unedited apart from indentation, with one exception noted in the second row: the compiler test fills in the failure name.</p></div></section>
+<section id="ports" class="alt"><div class="wrap"><div class="head center"><div class="eyebrow">Ports</div><h2>The only place <span class="grad">order can vary.</span></h2><p class="sub">Every other value in munu has a single writer. Where several senders must feed one stream, you declare a port and say which orders it accepts.</p></div><div class="xrows"><div class="xrow"><pre class="xcode" tabindex="0"><code>readings: [<span class="t">Reading</span>] {
+    <span class="k">ends</span>: ctl, lhs, rhs
+    <span class="k">bound</span>: <span class="t">READINGS_BOUND</span>
+    <span class="k">do</span>:
+        [from(lhs)] <span class="k">false</span>
+        <span class="k">and</span> [from(rhs)] <span class="k">false</span>
+        <span class="k">and</span> [from(ctl)] <span class="k">nu</span> <span class="t">X</span>. [_] <span class="t">X</span>
+    <span class="k">must</span>:
+        <span class="o">&lt;</span>from(ctl)<span class="o">&gt;</span><span class="o">~</span>deadline(<span class="t">CONFIG_MUST</span>) <span class="k">true</span>
+        <span class="k">and</span> <span class="k">nu</span> <span class="t">X</span>. [_]<span class="o">~</span>deadline(<span class="t">SAMPLE_MUST</span>) <span class="t">X</span>
+}</code></pre><div class="xtxt"><span class="xtag">Ports</span><h3>The one declared place where order can vary</h3><p>A port is where several senders feed one stream. It names its ends, a bound on how many values can wait, and a formula for the orders it accepts: here neither sensor may speak until the controller has, after which anything goes, within the stated deadlines. Every other value in the language has a single writer, so the system is designed so that run-to-run variation can enter only through ports like this one, and everything else can be reproduced.</p></div></div></div></div></section>
+<section id="psi"><div class="wrap"><div class="head center"><div class="eyebrow">Psi-terms</div><h2>Shared work, <span class="grad">filled in by many.</span></h2><p class="sub">munu&rsquo;s types are psi-terms: structures that can be partly known. Each party adds what it knows, and the runtime checks it against what everyone else said.</p></div><div class="xrows"><div class="xrow"><pre class="xcode" tabindex="0"><code><span class="k">mu</span> f(r: {a: <span class="t">i64</span>}) <span class="o">-&gt;</span> <span class="t">u64</span> { r <span class="o">=&gt;</span> <span class="n">0u64</span> }
+<span class="k">mu</span> g(r: {a: <span class="t">bool</span>}) <span class="o">-&gt;</span> <span class="t">u64</span> { r <span class="o">=&gt;</span> <span class="n">0u64</span> }
+<span class="k">mu</span> main() <span class="o">-&gt;</span> <span class="t">u64</span> { _ <span class="o">=&gt;</span> { <span class="k">let</span> y; <span class="k">let</span> z <span class="o">=</span> <span class="n">1u64</span>; <span class="k">let</span> r <span class="o">=</span> {a: y}; f(r); g(r) } }
+
+<span class="k">mu</span> main() <span class="o">-&gt;</span> <span class="t">u64</span> { _ <span class="o">=&gt;</span> { <span class="k">let</span> y; <span class="k">let</span> r; r <span class="o">=</span> {a: y}; r <span class="o">=</span> {a: <span class="n">1i64</span>}; <span class="n">0u64</span> } }</code></pre><div class="xtxt"><span class="xtag">Psi-terms</span><h3>Shared work that several parties fill in</h3><p>Types are psi-terms: structures that can be partly known. A record can be built with a blank field (<span class="kwd">let y;</span>), and each part of the program that uses it adds what it knows about that field, checked against what the others said. In the first compiler test one call expects a number and the other a true-or-false value, so the program is refused. In the second, a later assignment fills the blank. This is designed for bots collaborating on shared work: each adds what it knows, and a conflict is caught instead of overwritten.</p></div></div></div></div></section>
+<section id="dataflow" class="alt"><div class="wrap"><div class="head center"><div class="eyebrow">Dataflow and scenes</div><h2>Variables that are filled once, <span class="grad">and screens that are data.</span></h2><p class="sub">A munu variable starts empty, is filled in once and is never changed. Anything that needs it waits until it has a value. Apps use the same rule for input, and draw themselves as scene values.</p></div><div class="xrows"><div class="xrow"><pre class="xcode" tabindex="0"><code><span class="k">mu</span> button_face(label: <span class="t">string</span>) <span class="o">-&gt;</span> <span class="t">SceneNode</span> {
+    label <span class="o">=&gt;</span> <span class="t">SceneNode</span>::<span class="t">Layout</span> {
+        node: <span class="t">LayoutNode</span>::<span class="t">Styled</span> {
+            fill_color_r: <span class="n">0.18</span>, fill_color_g: <span class="n">0.42</span>, fill_color_b: <span class="n">0.55</span>, fill_color_a: <span class="n">1.0</span>,
+            child: pad(<span class="n">16.0</span>, <span class="n">32.0</span>, <span class="n">16.0</span>, <span class="n">32.0</span>, text(label))
+        }
+    }
+}</code></pre><div class="xtxt"><span class="xtag">Scenes</span><h3>A screen is a value</h3><p>An app draws itself by returning a scene: a tree of layout, text and controls built by ordinary <span class="kwd">mu</span> functions. Nothing is painted until the browser reads the tree. Because the screen is data, the browser is designed to hand the same tree to the agent, which can read it and act on it without a screenshot.</p></div></div><div class="xrow"><pre class="xcode" tabindex="0"><code><span class="k">eager</span> <span class="k">nu</span> click_cycle(n: <span class="t">u64</span>) <span class="o">-&gt;</span> [<span class="t">SceneNode</span>] {
+    n <span class="o">=&gt;</span> {
+        <span class="k">let</span> click;
+        <span class="k">let</span> label = <span class="k">if</span> n == <span class="n">0u64</span> { <span class="s">"Click me"</span> } <span class="k">else</span> { <span class="s">"Clicked!"</span> };
+        <span class="k">let</span> scene = pad(<span class="n">40.0</span>, <span class="n">40.0</span>, <span class="n">40.0</span>, <span class="n">40.0</span>,
+            click_surface(click, button_face(label)));
+        [scene <span class="o">|</span> wait_click(n, click)]
+    }
+}</code></pre><div class="xtxt"><span class="xtag">Dataflow</span><h3>Wait for a value, not for an event</h3><p><span class="kwd">let click;</span> declares a variable with no value yet. The button is wired to it, and pressing it fills it in, once. The stream returns the current scene and then hands the variable to the next step, which continues only when the variable has a value. There are no callbacks or event handlers to register: a party that needs a fact waits on it, and a party that knows it fills it in.</p></div></div></div><p class="tmap-note">From a test program in the munu runtime. The browser that hands scenes to the agent is in development.</p></div></section>
+<section id="memory"><div class="wrap"><div class="head center"><div class="eyebrow">Facts and history</div><h2>Memory you can <span class="grad">question later.</span></h2><p class="sub">Long-term memory is a set of typed facts, changed only in transactions and queried as of any moment.</p></div><div class="xrows"><div class="xrow"><pre class="xcode" tabindex="0"><code><span class="k">pub</span> <span class="k">relation</span> <span class="t">Module</span> { name: <span class="t">string</span> @key, path: <span class="t">string</span>, lines: <span class="t">i64</span> }
+
+<span class="k">pub</span> <span class="k">transaction</span> add_module(name: <span class="t">string</span>, path: <span class="t">string</span>, lines: <span class="t">i64</span>) <span class="o">-&gt;</span> () {
+    name, path, lines <span class="o">=&gt;</span> {
+        <span class="k">assert</span> <span class="t">Module</span> { name: name, path: path, lines: lines };
+    }
+}</code></pre><div class="xtxt"><span class="xtag">Facts</span><h3>Memory is a set of typed facts</h3><p>Long-term memory is declared as relations with keys and typed fields, and changed only through <span class="kwd">transaction</span> blocks that <span class="kwd">assert</span> or <span class="kwd">retract</span> facts. The compiler stops a query from calling a transaction, so reading memory can never change it.</p></div></div><div class="xrow"><pre class="xcode" tabindex="0"><code><span class="k">query</span> snapshot(target: <span class="t">string</span>, t: <span class="t">i64</span>) <span class="o">-&gt;</span> [<span class="t">string</span>] {
+    target, t <span class="o">=&gt;</span> <span class="k">as_of</span>(t) {
+        <span class="k">let</span> _ <span class="o">&lt;</span><span class="o">-</span> <span class="t">Dep</span> { from: name, to: target, <span class="o">..</span> };
+        name
+    }
+}</code></pre><div class="xtxt"><span class="xtag">History</span><h3>Ask what was true at a point in time</h3><p>A query can run <span class="kwd">as_of</span> an earlier moment, or ask for everything <span class="kwd">since</span> one, which is designed for audits and incident reviews: what did the bot know when it acted?</p></div></div></div><p class="tmap-note">Excerpts are unedited apart from indentation.</p></div></section>
+<section id="routing" class="alt"><div class="wrap"><div class="head center"><div class="eyebrow">Hyperbolic routing</div><h2>A network <span class="grad">with no central directory.</span></h2><p class="sub">The routing code is part of the munu runtime today. The global network that will use it, connecting every box and every bot by its QR code with end-to-end encryption, is planned.</p></div><div class="xrows"><div class="xrow"><pre class="xcode" tabindex="0"><code><span class="k">mu</span> hyperbolic_distance(r1: <span class="t">f64</span>, a1: <span class="t">f64</span>, r2: <span class="t">f64</span>, a2: <span class="t">f64</span>) <span class="o">-&gt;</span> <span class="t">f64</span> {
+    r1, a1, r2, a2 <span class="o">=&gt;</span> {
+        <span class="k">let</span> x1 = f64_mul(r1, f64_cos(a1));
+        <span class="k">let</span> y1 = f64_mul(r1, f64_sin(a1));
+        <span class="k">let</span> x2 = f64_mul(r2, f64_cos(a2));
+        <span class="k">let</span> y2 = f64_mul(r2, f64_sin(a2));
+        <span class="k">let</span> dx = f64_sub(x1, x2);
+        <span class="k">let</span> dy = f64_sub(y1, y2);
+        <span class="k">let</span> delta_sq = f64_add(f64_mul(dx, dx), f64_mul(dy, dy));
+        <span class="k">let</span> d1sq = f64_sub(<span class="n">1.0</span>, f64_mul(r1, r1));
+        <span class="k">let</span> d2sq = f64_sub(<span class="n">1.0</span>, f64_mul(r2, r2));
+        <span class="k">let</span> denom = f64_mul(d1sq, d2sq);
+        f64_acosh(f64_add(<span class="n">1.0</span>, f64_div(f64_mul(<span class="n">2.0</span>, delta_sq), denom)))
+    }
+}</code></pre><div class="xtxt"><span class="xtag">Hyperbolic routing</span><h3>Every node has a place on a curved map</h3><p>Each node is given coordinates in the Poincar&eacute; disk, a model of hyperbolic space, and this function measures the distance between two of them. A packet goes to whichever neighbour is closest to its destination, so a node needs to know only its neighbours, not the whole network. Hyperbolic space has room for very large trees with short paths, which is why it is used for routing.</p></div></div><div class="xrow"><pre class="xcode" tabindex="0"><code><span class="k">pub</span> <span class="k">contract</span> <span class="t">HyperbolicRouting</span>() <span class="o">-&gt;</span> [<span class="t">RoutingEvent</span>]
+    <span class="k">substrate</span> { bytecode }
+    <span class="k">behaviour</span> {
+        <span class="k">do</span>:
+            <span class="k">nu</span> <span class="t">X</span>.
+                [from(self)]
+                    <span class="o">&lt;</span>to(self)<span class="o">&gt;</span> <span class="k">true</span>
+                <span class="k">and</span> [_] <span class="t">X</span>
+        <span class="k">must</span>: <span class="k">true</span>
+    }
+{ hyperbolic_routing_loop() }</code></pre><div class="xtxt"><span class="xtag">Routing as a contract</span><h3>The router is held to a rule as well</h3><p>The router is a contract like any other part. Its formula says that at every step, whenever something arrives, sending it on must stay possible. The same supervision and checking that apply to your code apply to the parts of the system that move it.</p></div></div></div><p class="tmap-note">Excerpts are unedited apart from one internal comment removed from the contract header.</p></div></section>
+<section id="architecture"><div class="wrap"><div class="head center"><div class="eyebrow">Architecture</div><h2>Three parts, <span class="grad">one language.</span></h2><p class="sub">How AbideBot is put together around munu. Parts marked planned or in development are designs, not shipped software.</p></div>
+<div class="grid g3 parts">
+<div class="card part"><h3>munu-box <span class="tag soon">In development</span></h3><p>A small virtual machine with munu as its first process and no usual operating system underneath. It runs the munu compiler. It is designed so the agent writes a module, compiles it in the box and swaps it in, with supervision restarting a failed part by its rule and a bad version rolling back.</p></div>
+<div class="card part"><h3>munu-bot <span class="tag soon">In development</span></h3><p>The browser and desktop app. It draws scenes, not HTML, and turns your clicks and typing into values filled in for the app. The agent runs on the box, not in the browser, and is designed to use the same scenes as you do.</p></div>
+<div class="card part"><h3>The network <span class="tag plan">Planned</span></h3><p>Shared state as psi-terms in one store, designed so tells commute and only the new part of a value travels. Routed by hyperbolic coordinates and encrypted end to end. Sites, documents and apps are designed to live here, not on the public web.</p></div>
+</div>
+<p class="tmap-note">The honest picture: the compiler, the runtime pieces shown above and the box&rsquo;s first stages exist. The browser&rsquo;s agent control, the network, self-hosting and published docs are planned. We will not claim savings or uptime before we can measure them.</p>
+</div></section>
+<section id="early-access-dev" class="alt"><div class="wrap"><div class="cta-box"><div class="eyebrow">Developer beta</div><h2>Build on munu.</h2><p class="sub" style="margin:14px auto 0">The beta is planned for around February 2027, for developers and munu enthusiasts. Join the waitlist on the home page, or write to us at <a class="inl" href="mailto:hello@abidebot.com">hello@abidebot.com</a>.</p><div class="cta-row" style="justify-content:center;margin-top:24px"><a class="btn btn-primary" href="index.html#early-access">Join the beta waitlist &rarr;</a><a class="btn btn-ghost" href="index.html#parts">Back to the product</a></div></div></div></section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div><a class="brand" href="index.html"><img src="assets/favicon.svg" alt="">AbideBot</a><p style="margin-top:10px">It abides. Built on munu. &copy; <span id="yr">2026</span> AbideBot. All rights reserved.</p></div>
+    <nav><a href="index.html#parts">Product</a><a href="munu.html">munu</a><a href="index.html#pricing">Pricing</a><a href="index.html#faq">FAQ</a><a href="mailto:hello@abidebot.com">Contact</a></nav>
+  </div>
+</footer>
+<script src="assets/main.js"></script>
+</body>
+</html>

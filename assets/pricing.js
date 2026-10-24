@@ -12,7 +12,7 @@ window.ABIDEBOT_PRICING = {
   plans: [
     {
       id: "selfhost", name: "Self-host", hkd: 0, usd: 0,
-      status: "Developer preview",
+      status: "Planned",
       desc: "Run AbideBot on your own hardware.",
       features: [
         "The same sealed image we host",
