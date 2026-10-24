@@ -224,7 +224,7 @@ footer a:hover{color:var(--text)}
 .btn .tag{margin-left:2px;font-size:.62rem;padding:2px 7px}
 .inl{color:var(--a2)}.inl:hover{text-decoration:underline}
 .faq code,.dev-hero code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.88em;color:#d6daea;background:#0a0c14;border:1px solid var(--line);border-radius:6px;padding:1px 5px}
-.hero h1{max-width:12ch}
+.hero h1{max-width:none;font-size:clamp(2.2rem,4.4vw,3.3rem);text-wrap:balance}.hero h1 .hl2{display:block}
 .mock-fig{margin:0}
 .mock-cap{font-size:.8rem;color:var(--muted);text-align:center;margin-top:12px}
 .mock-side .side-h{font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--a2);padding-bottom:2px}
