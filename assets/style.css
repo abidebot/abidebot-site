@@ -204,3 +204,15 @@ footer a:hover{color:var(--text)}
   .tmap-cell{padding:14px 18px}
   .tmap-left{padding-bottom:4px}.tmap-right{padding-top:4px}
 }
+/* real code examples */
+.xrows{display:grid;gap:18px;max-width:1100px;margin:0 auto}
+.xrow{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:26px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px}
+.xcode{margin:0;background:#0a0c14;border:1px solid var(--line);border-radius:12px;padding:14px 16px;overflow-x:auto;font:13px/1.6 ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;color:#d6daea;tab-size:4;-webkit-overflow-scrolling:touch}
+.xcode code{font:inherit;white-space:pre}
+.xcode .k{color:#b9a6ff;font-weight:600}.xcode .t{color:#67e8f9}.xcode .n{color:#fbbf77}.xcode .s{color:#86efac}.xcode .c{color:#6b7389;font-style:italic}.xcode .o{color:#8b93ab}
+.xtxt .xtag{display:inline-block;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--a2);margin-bottom:6px}
+.xtxt h3{font-size:1.08rem;margin:0 0 8px}
+.xtxt p{color:var(--muted);font-size:.93rem}
+.xtxt .kwd,.xtxt .arrow{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.86em;color:#d6daea;background:#0a0c14;border:1px solid var(--line);border-radius:6px;padding:1px 5px;white-space:nowrap}
+@media (max-width:980px){.xrow{grid-template-columns:1fr;gap:14px}}
+@media (max-width:720px){.xrow{padding:14px}.xcode{font-size:12px;padding:12px}}
