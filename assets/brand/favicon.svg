@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="AbideBot">
+<title>AbideBot</title>
+<g shape-rendering="crispEdges">
+<rect width="32" height="32" fill="#3E2723"/>
+<rect x="2" y="2" width="28" height="28" fill="#F2E8CF"/>
+<path fill="#C8553D" d="M3 3h4v2h-4zM15 3h2v2h-2zM25 3h4v2h-4zM3 5h2v2h-2zM13 5h6v2h-6zM27 5h2v2h-2zM11 7h4v2h-4zM17 7h4v2h-4zM9 9h4v2h-4zM19 9h4v2h-4zM7 11h4v2h-4zM21 11h4v2h-4zM5 13h4v2h-4zM23 13h4v2h-4zM3 15h4v2h-4zM25 15h4v2h-4zM5 17h4v2h-4zM23 17h4v2h-4zM7 19h4v2h-4zM21 19h4v2h-4zM9 21h4v2h-4zM19 21h4v2h-4zM11 23h4v2h-4zM17 23h4v2h-4zM3 25h2v2h-2zM13 25h6v2h-6zM27 25h2v2h-2zM3 27h4v2h-4zM15 27h2v2h-2zM25 27h4v2h-4z"/>
+<path fill="#3E2723" d="M15 9h2v2h-2zM13 11h6v2h-6zM11 13h10v2h-10zM9 15h14v2h-14zM11 17h10v2h-10zM13 19h6v2h-6zM15 21h2v2h-2z"/>
+</g>
+</svg>
