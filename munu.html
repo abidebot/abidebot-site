@@ -143,15 +143,50 @@
 <span class="k">pub</span> <span class="k">contract</span> <span class="t">Corporal</span>(up_stream: [<span class="t">i64</span>], down_stream: [<span class="t">i64</span>]) <span class="o">-&gt;</span> [<span class="t">u64</span>]
     <span class="k">substrate</span> { bytecode }
     <span class="k">behaviour</span> { <span class="k">do</span>: permanent() <span class="k">must</span>: permanent() }
-{ start_corporal(up_stream, down_stream) }</code></pre><div class="xtxt"><span class="xtag">Supervision strategy</span><h3>How a bot recovers is written down, not configured</h3><p>The recovery rule is a mu-calculus formula: on any failure, restart, and keep doing that for as long as the component runs. Each component names its rule in its header (<span class="kwd">do:</span> is what it does, <span class="kwd">must:</span> is what it is held to), and the compiler turns the formula into a state machine at build time.</p></div></div><div class="xrow"><pre class="xcode" tabindex="0"><code><span class="k">pub</span> <span class="k">contract</span> <span class="t">Supervisor</span>(x: <span class="t">u64</span>) <span class="o">-&gt;</span> [<span class="t">u64</span>]
+{ start_corporal(up_stream, down_stream) }</code></pre><div class="xtxt"><span class="xtag">Supervision strategy</span><h3>How a bot recovers is written down, not configured</h3><p>The recovery rule is a mu-calculus formula: on any failure, restart, and keep doing that for as long as the component runs. Each component names its rule in its header (<span class="kwd">do:</span> is what it does, <span class="kwd">must:</span> is what it is held to), and the compiler turns the formula into a state machine at build time.</p></div></div><div class="xrow"><pre class="xcode" tabindex="0"><code><span class="k">enum</span> <span class="t">Failure</span> { <span class="t">Lost</span> }
+<span class="k">enum</span> <span class="t">Report</span> { <span class="t">ChildFailed</span>(<span class="t">u64</span>, <span class="t">u64</span>), <span class="t">ChildDone</span>(<span class="t">u64</span>) }
+<span class="k">const</span> <span class="t">REPORTS_BOUND</span> = <span class="n">8u64</span>;
+<span class="k">cdf</span> <span class="t">RESPONSE_MUST</span> = <span class="n">5</span>ms
+
+<span class="k">eager</span> <span class="k">nu</span> drill(x: <span class="t">u64</span>) <span class="o">-&gt;</span> [<span class="t">u64</span>] {
+    <span class="n">0u64</span> <span class="o">=&gt;</span> <span class="k">crash</span> <span class="t">Failure</span>::<span class="t">Lost</span>,
+    x <span class="o">=&gt;</span> [x <span class="o">|</span> drill(x)]
+}
+
+<span class="k">pub</span> <span class="k">contract</span> <span class="t">Corporal</span>(x: <span class="t">u64</span>) <span class="o">-&gt;</span> [<span class="t">u64</span>]
+    <span class="k">substrate</span> { bytecode }
+{ drill(x) }
+
+<span class="k">eager</span> <span class="k">nu</span> command(rs: [<span class="t">Report</span>]) <span class="o">-&gt;</span> [<span class="t">u64</span>] {
+    [r <span class="o">|</span> rest] <span class="o">=&gt;</span> <span class="k">match</span> r {
+        <span class="t">Report</span>::<span class="t">ChildFailed</span>(slot, reason) <span class="o">=&gt;</span> [slot <span class="o">|</span> command(rest)]
+    },
+    [] <span class="o">=&gt;</span> []
+}
+
+<span class="k">pub</span> <span class="k">contract</span> <span class="t">Major</span>(a: <span class="t">u64</span>, b: <span class="t">u64</span>) <span class="o">-&gt;</span> [<span class="t">u64</span>]
     <span class="k">substrate</span> { bytecode }
     <span class="k">behaviour</span> {
-        <span class="k">do</span>: <span class="k">nu</span> <span class="t">X</span>. [fail(left, <span class="t">Failure</span>::<span class="t">Lost</span>)] <span class="o">&lt;</span>restart(left)<span class="o">&gt;</span> <span class="t">X</span>
-                  <span class="k">and</span> [done(left)] <span class="o">&lt;</span>absorb(left)<span class="o">&gt;</span> <span class="t">X</span>
+        <span class="k">do</span>: <span class="k">nu</span> <span class="t">X</span>. [fail(alpha, <span class="t">Failure</span>::<span class="t">Lost</span>)] <span class="o">&lt;</span>restart(alpha)<span class="o">&gt;</span> <span class="t">X</span>
+                  <span class="k">and</span> [done(alpha)] <span class="o">&lt;</span>absorb(alpha)<span class="o">&gt;</span> <span class="t">X</span>
+                  <span class="k">and</span> [fail(bravo, _)] <span class="o">&lt;</span>restart(self)<span class="o">&gt;</span> <span class="t">X</span>
                   <span class="k">and</span> [_] <span class="t">X</span>
-        <span class="k">must</span>: <span class="k">nu</span> <span class="t">X</span>. [fail(<span class="o">!</span>self, _)]<span class="o">~</span>deadline(<span class="t">RESPONSE_MUST</span>) <span class="t">X</span>
+        <span class="k">must</span>: <span class="k">nu</span> <span class="t">X</span>. [fail(!self, _)]~deadline(<span class="t">RESPONSE_MUST</span>) <span class="t">X</span>
     }
-    <span class="k">children</span> { left: <span class="t">Worker</span> }</code></pre><div class="xtxt"><span class="xtag">Recovery per cause</span><h3>Different failures get different answers</h3><p>A supervisor lists its children and answers each kind of failure on its own line: restart the child on one cause, absorb a child that has finished, and be held to answering a child&rsquo;s failure within a stated deadline. This is from a compiler test, which also checks the other side: an answer to a failure the child can never raise is refused at compile time, so there is no dead recovery code.</p></div></div><div class="xrow"><pre class="xcode" tabindex="0"><code><span class="k">pub</span> <span class="k">enum</span> <span class="t">FetchFailure</span> { <span class="t">EndedWithoutObject</span> }
+    <span class="k">children</span> { alpha: <span class="t">Corporal</span>, bravo: <span class="t">Corporal</span> }
+    <span class="k">ports</span> {
+        reports: [<span class="t">Report</span>] {
+            ends: r1
+            bound: <span class="t">REPORTS_BOUND</span>
+            <span class="k">do</span>: <span class="k">nu</span> <span class="t">X</span>. [_] <span class="t">X</span>
+            <span class="k">must</span>: <span class="k">true</span>
+        }
+    }
+{
+    <span class="k">let</span> self.alpha = <span class="k">spawn</span> <span class="t">Corporal</span>(a);
+    <span class="k">let</span> self.bravo = <span class="k">spawn</span> <span class="t">Corporal</span>(b);
+    command(reports)
+}</code></pre><div class="xtxt"><span class="xtag">Supervision tree</span><h3>A major runs two corporals and answers each one differently</h3><p>A contract&rsquo;s body can start other contracts. <span class="kwd">Major</span> declares two positions under <span class="kwd">children</span> and spawns a <span class="kwd">Corporal</span> into each, <span class="kwd">alpha</span> from <span class="kwd">a</span> and <span class="kwd">bravo</span> from <span class="kwd">b</span>. Then it hands over to <span class="kwd">command</span>, which reads the reports the kernel files on the <span class="kwd">reports</span> port when a child fails or finishes. The major supervises both corporals, and a corporal&rsquo;s failure is answered by the major&rsquo;s rules, one line per case. If <span class="kwd">alpha</span> fails with <span class="kwd">Failure::Lost</span>, only <span class="kwd">alpha</span> is restarted, from the argument it was first given. If <span class="kwd">bravo</span> fails for any reason, the whole major restarts, so both corporals start again from <span class="kwd">a</span> and <span class="kwd">b</span>. A corporal that finishes is absorbed, and the <span class="kwd">must:</span> line holds the major to answering any child&rsquo;s failure within <span class="kwd">RESPONSE_MUST</span>. Spawning a corporal only binds its position. When its work runs is settled by <span class="kwd">drill</span>, an <span class="kwd">eager nu</span>, not by <span class="kwd">spawn</span>. The compiler also checks the other side: an answer to a failure a child can never raise is refused at compile time. Written for this page, following the shapes in the compiler&rsquo;s own tests.</p></div></div><div class="xrow"><pre class="xcode" tabindex="0"><code><span class="k">pub</span> <span class="k">enum</span> <span class="t">FetchFailure</span> { <span class="t">EndedWithoutObject</span> }
 
 <span class="k">pub</span> <span class="k">mu</span> first_object(objects: [<span class="t">u64</span>]) <span class="o">-&gt;</span> <span class="t">u64</span> {
     [] <span class="o">=&gt;</span> <span class="k">crash</span> <span class="t">FetchFailure</span>::<span class="t">EndedWithoutObject</span>,
@@ -165,7 +200,7 @@
         <span class="k">do</span>: <span class="k">nu</span> <span class="t">X</span>. [_]<span class="o">~</span>deadline(<span class="t">FETCH_DO</span>) <span class="t">X</span>
         <span class="k">must</span>: <span class="k">nu</span> <span class="t">X</span>. [_]<span class="o">~</span>deadline(<span class="t">FETCH_MUST</span>) <span class="t">X</span>
     }
-{ fetch_and_arrive(anchor_key, commitment, size) }</code></pre><div class="xtxt"><span class="xtag">Response time in the code</span><h3>Deadlines sit next to the logic they cover</h3><p>Each component states a target time and a hard limit for its steps (<span class="kwd">~deadline</span>). The limits are declared as named constants, so the numbers you hold a bot to live in the same file as the code that has to meet them.</p></div></div></div><p class="tmap-note">Excerpts are unedited apart from indentation, with one exception noted in the second row: the compiler test fills in the failure name.</p></div></section>
+{ fetch_and_arrive(anchor_key, commitment, size) }</code></pre><div class="xtxt"><span class="xtag">Response time in the code</span><h3>Deadlines sit next to the logic they cover</h3><p>Each component states a target time and a hard limit for its steps (<span class="kwd">~deadline</span>). The limits are declared as named constants, so the numbers you hold a bot to live in the same file as the code that has to meet them.</p></div></div></div><p class="tmap-note">Excerpts are unedited apart from indentation. The second row is written for this page, following the shapes in the compiler&rsquo;s tests.</p></div></section>
 <section id="ports" class="alt"><div class="wrap"><div class="head center"><div class="eyebrow">Ports</div><h2>The only place <span class="grad">order can vary.</span></h2><p class="sub">Every other value in munu has a single writer. Where several senders must feed one stream, you declare a port and say which orders it accepts.</p></div><div class="xrows"><div class="xrow"><pre class="xcode" tabindex="0"><code>readings: [<span class="t">Reading</span>] {
     <span class="k">ends</span>: ctl, lhs, rhs
     <span class="k">bound</span>: <span class="t">READINGS_BOUND</span>
