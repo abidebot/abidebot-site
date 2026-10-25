@@ -297,3 +297,14 @@ details.mx-hidden p{padding:0 12px 6px;font-size:.78rem}
 @media (max-width:720px){.mx-badge{font-size:.64rem}.munu-out{font-size:11px}}
 .mx-status{max-width:1100px;margin:0 auto;color:#f87171;text-align:center}
 .mx-status:empty{display:none}
+/* editable examples: a transparent textarea over the highlighted code */
+.mx-ed{display:grid;min-width:0}
+.mx-ed>.xcode,.mx-ed>.mx-ta{grid-area:1/1;min-width:0}
+.mx-ed>.xcode{overflow-x:hidden}
+.mx-ta{margin:0;border:1px solid transparent;border-radius:12px;padding:14px 16px;font:13px/1.6 ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;tab-size:4;white-space:pre;overflow-x:auto;overflow-y:hidden;resize:none;background:transparent;color:transparent;caret-color:#f3f4fb;-webkit-text-fill-color:transparent;outline:none;width:100%;height:100%;box-sizing:border-box;-webkit-overflow-scrolling:touch}
+.mx-ta::selection{background:rgba(124,92,255,.38);-webkit-text-fill-color:transparent}
+.mx-ed:focus-within>.xcode{border-color:var(--a1);box-shadow:0 0 0 3px rgba(124,92,255,.18)}
+.mx-ed>.xcode code,.mx-ta{font-variant-ligatures:none;letter-spacing:0}
+.mx-reset{background:transparent;color:var(--muted)}
+@media (max-width:720px){.mx-ta{font-size:12px;padding:12px}}
+.mx-note{font-size:.74rem;color:var(--muted);margin-right:auto}

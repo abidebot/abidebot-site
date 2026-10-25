@@ -1,10 +1,15 @@
-// munu examples on the page: adds a Run or Check button to each runnable block.
-// Nothing is downloaded until the first click: the click imports the client,
-// which starts a Worker that loads the compiler.
+// munu examples on the page: each run, check or error block can be edited in place
+// and has a Run or Check button. Nothing is downloaded until the first click: the
+// click imports the client, which starts a Worker that loads the compiler.
+
+import { highlight } from "./munu-highlight.js";
 
 const BUTTON = { run: "\u25B6 Run", check: "\u2713 Check", error: "\u2713 Check" };
 const RUN_OPTS = { timeMs: 2000 };
+const INDENT = "    ";
 let client = null;
+// The code each block had when the page loaded. Preludes always use this text.
+const original = new Map();
 
 function loadClient() {
     if (client === null) {
@@ -14,6 +19,9 @@ function loadClient() {
 }
 
 function exampleText(id) {
+    if (original.has(id)) {
+        return original.get(id);
+    }
     const pre = document.querySelector(`pre[data-munu-id="${CSS.escape(id)}"]`);
     if (pre !== null) {
         return pre.querySelector("code").textContent;
@@ -26,8 +34,8 @@ function exampleText(id) {
 }
 
 // Same assembly as check-examples.mjs: module line, preludes, the code, the run() wrapper.
-function assemble(pre) {
-    const code = pre.querySelector("code").textContent;
+// The code is the block's current text, edited or not.
+function assemble(pre, code) {
     let out = "";
     const module = pre.dataset.munuModule;
     if (module) {
@@ -157,7 +165,7 @@ function showRun(out, pre, result, assembled) {
 function showCheck(out, pre, result, assembled, mode) {
     const ms = `${Math.round(num(result.ms ?? 0))} ms`;
     if (result.status === "ok") {
-        out.append(el("div", mode === "error" ? "bad" : "ok", `OK \u00B7 checked in ${ms}`));
+        out.append(el("div", "ok", `OK \u00B7 checked in ${ms}`));
     } else if (result.status === "typechecked-unverified") {
         out.append(el("div", "ok", `Type-checks \u00B7 checked in ${ms}`),
             el("div", "dim", "Its requires and ensures need the prover, which does not run in the browser."));
@@ -168,13 +176,13 @@ function showCheck(out, pre, result, assembled, mode) {
     }
 }
 
-async function onClick(button, pre, out, mode) {
+async function onClick(button, pre, out, mode, editor) {
     button.disabled = true;
     clearMarks(pre);
     out.replaceChildren(el("div", "dim", client === null ? "Loading the compiler\u2026" : "Working\u2026"));
     try {
         const munu = await loadClient();
-        const assembled = assemble(pre);
+        const assembled = assemble(pre, editor.value);
         const result = mode === "run"
             ? await munu.run(assembled.src, pre.dataset.munuEntry ?? null, RUN_OPTS)
             : await munu.check(assembled.src);
@@ -192,6 +200,88 @@ async function onClick(button, pre, out, mode) {
     }
 }
 
+// Insert text at the selection, keeping the browser's undo history where it can.
+function insertText(area, text) {
+    area.focus();
+    if (!document.execCommand("insertText", false, text)) {
+        area.setRangeText(text, area.selectionStart, area.selectionEnd, "end");
+        area.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+}
+
+// A transparent textarea over the highlighted <pre>. The <pre> keeps its original
+// markup until the first edit, so an untouched block looks exactly as it did.
+function makeEditor(pre, onEdit) {
+    const code = pre.querySelector("code");
+    const startHtml = code.innerHTML;
+    const startText = code.textContent;
+    const stack = el("div", "mx-ed");
+    pre.before(stack);
+    stack.append(pre);
+    pre.removeAttribute("tabindex");
+    const area = document.createElement("textarea");
+    area.className = "mx-ta";
+    area.value = startText;
+    area.spellcheck = false;
+    area.wrap = "off";
+    for (const [k, v] of [["autocapitalize", "off"], ["autocomplete", "off"], ["autocorrect", "off"], ["aria-label", "Example code, editable"]]) {
+        area.setAttribute(k, v);
+    }
+    stack.append(area);
+
+    let escaped = false;
+    const render = () => {
+        // A <pre> drops a final empty line, so give it one more character to keep heights equal.
+        const text = area.value;
+        code.innerHTML = highlight(text) + (text.endsWith("\n") ? " " : "");
+        pre.scrollLeft = area.scrollLeft;
+        onEdit(text !== startText);
+    };
+    area.addEventListener("input", render);
+    area.addEventListener("scroll", () => {
+        pre.scrollLeft = area.scrollLeft;
+    });
+    area.addEventListener("keydown", (event) => {
+        if (event.isComposing) {
+            return;
+        }
+        if (event.key === "Escape") {
+            escaped = true;
+            return;
+        }
+        if (event.key === "Tab" && !escaped && !event.shiftKey && !event.ctrlKey && !event.altKey && !event.metaKey) {
+            event.preventDefault();
+            const lineStart = area.value.lastIndexOf("\n", area.selectionStart - 1) + 1;
+            const column = area.selectionStart - lineStart;
+            insertText(area, " ".repeat(INDENT.length - (column % INDENT.length)));
+            return;
+        }
+        if (event.key === "Enter" && !event.shiftKey && !event.ctrlKey && !event.altKey && !event.metaKey) {
+            event.preventDefault();
+            const lineStart = area.value.lastIndexOf("\n", area.selectionStart - 1) + 1;
+            const indent = /^[ \t]*/.exec(area.value.slice(lineStart, area.selectionStart))[0];
+            insertText(area, "\n" + indent);
+            return;
+        }
+        escaped = false;
+    });
+    area.addEventListener("blur", () => {
+        escaped = false;
+    });
+    return {
+        get value() {
+            return area.value;
+        },
+        reset() {
+            area.value = startText;
+            code.innerHTML = startHtml;
+            area.scrollLeft = 0;
+            pre.scrollLeft = 0;
+            onEdit(false);
+        },
+    };
+}
+
 for (const pre of document.querySelectorAll("pre.xcode[data-munu]")) {
     const mode = pre.dataset.munu;
     const box = pre.closest(".mx");
@@ -203,12 +293,25 @@ for (const pre of document.querySelectorAll("pre.xcode[data-munu]")) {
     if (mode === "run") {
         badge.textContent = "Runs in your browser";
     }
+    original.set(pre.dataset.munuId, pre.querySelector("code").textContent);
+    const reset = el("button", "mx-btn mx-reset", "Reset");
+    reset.type = "button";
+    reset.hidden = true;
+    reset.setAttribute("aria-label", "Put back the original code");
     const button = el("button", "mx-btn", BUTTON[mode]);
     button.type = "button";
     button.setAttribute("aria-label", `${mode === "run" ? "Run" : "Check"} this example in your browser`);
-    bar.append(button);
+    bar.append(reset, button);
     const out = el("div", "munu-out");
     out.setAttribute("aria-live", "polite");
-    pre.after(out);
-    button.addEventListener("click", () => onClick(button, pre, out, mode));
+    const editor = makeEditor(pre, (edited) => {
+        reset.hidden = !edited;
+        box.classList.toggle("mx-edited", edited);
+    });
+    pre.parentElement.after(out);
+    button.addEventListener("click", () => onClick(button, pre, out, mode, editor));
+    reset.addEventListener("click", () => {
+        editor.reset();
+        out.replaceChildren();
+    });
 }

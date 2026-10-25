@@ -19,5 +19,10 @@
     window.location.href='mailto:'+f.dataset.to+'?subject='+encodeURIComponent('AbideBot waitlist')+'&body='+body;
     msg.textContent='Your email app should open with a prefilled request. Send it and you are on the list. No payment is taken.';
   })}
+  // munu examples run through a module script and a Worker, which browsers refuse on file:// pages
+  if(location.protocol==='file:'){document.querySelectorAll('pre.xcode[data-munu="run"],pre.xcode[data-munu="check"],pre.xcode[data-munu="error"]').forEach(function(p){
+    var bar=p.closest('.mx')&&p.closest('.mx').querySelector('.mx-bar');if(!bar)return;
+    var n=document.createElement('span');n.className='mx-note';n.textContent='Open this page over http to edit and run it';bar.insertBefore(n,bar.firstChild);
+  })}
   var y=document.getElementById('yr');if(y)y.textContent=new Date().getFullYear();
 })();
