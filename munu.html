@@ -70,12 +70,16 @@
 
 <span class="k">nu</span> count_from(n: <span class="t">i64</span>) <span class="o">-&gt;</span> [<span class="t">i64</span>] {
     n <span class="o">=&gt;</span> [n <span class="o">|</span> count_from(n <span class="o">+</span> <span class="n">1</span>)]
-}</code></pre><div class="xtxt"><span class="xtag">Finite or ongoing</span><h3>Finishing or never-ending, declared up front</h3><p><span class="kwd">mu</span> marks a function that must finish: here each case gives its answer at once. <span class="kwd">nu</span> marks one that never finishes but must keep producing: every step hands back another element before it carries on. Because the keyword comes first, the kind of function is settled before a single case is written.</p></div></div><div class="xrow"><pre class="xcode" tabindex="0"><code><span class="k">struct</span> <span class="t">Item</span> { name: <span class="t">string</span>, price: <span class="t">i64</span> }
+}</code></pre><div class="xtxt"><span class="xtag">Finite or ongoing</span><h3>Finishing or never-ending, declared up front</h3><p><span class="kwd">mu</span> marks a function that must finish: here each case gives its answer at once. <span class="kwd">nu</span> marks one that never finishes but must keep producing: every step hands back another element before it carries on. Because the keyword comes first, the kind of function is settled before a single case is written.</p></div></div><div class="xrow"><pre class="xcode" tabindex="0"><code><span class="k">enum</span> <span class="t">Size</span> { <span class="t">Small</span>, <span class="t">Large</span> }
+<span class="k">struct</span> <span class="t">Cup</span> { size: <span class="t">Size</span>, price: <span class="t">i64</span> }
 
-<span class="k">mu</span> first_price(items: [<span class="t">Item</span>]) <span class="o">-&gt;</span> <span class="t">i64</span> {
+<span class="k">mu</span> first_price(cups: [<span class="t">Cup</span>]) <span class="o">-&gt;</span> <span class="t">i64</span> {
     [] <span class="o">=&gt;</span> <span class="n">0</span>,
-    [head <span class="o">|</span> tail] <span class="o">=&gt;</span> head.price
-}</code></pre><div class="xtxt"><span class="xtag">Familiar forms</span><h3>Written the way common code is written</h3><p>Structs, typed fields, braces and field access look the way they do in widely used languages, and list patterns such as <span class="kwd">[head | tail]</span> follow a long-standing convention. In our measurements 50 of the 54 keywords are single tokens in widely used tokenizers.</p></div></div><div class="xrow"><pre class="xcode" tabindex="0"><code><span class="k">mu</span> ring_truncate(list: [<span class="t">Histogram</span>], k: <span class="t">i64</span>) <span class="o">-&gt;</span> [<span class="t">Histogram</span>]
+    [head <span class="o">|</span> _] <span class="o">=&gt;</span> <span class="k">match</span> head.size {
+        <span class="t">Size</span>::<span class="t">Small</span> <span class="o">=&gt;</span> head.price,
+        <span class="t">Size</span>::<span class="t">Large</span> <span class="o">=&gt;</span> head.price <span class="o">+</span> <span class="n">1</span>
+    }
+}</code></pre><div class="xtxt"><span class="xtag">Familiar forms</span><h3>Written the way common code is written</h3><p>Enums, structs, typed fields, braces and a <span class="kwd">match</span> look the way they do in widely used languages, and the list pattern <span class="kwd">[head | _]</span> follows a long-standing convention. In our measurements 50 of the 54 keywords are single tokens in widely used tokenizers.</p></div></div><div class="xrow"><pre class="xcode" tabindex="0"><code><span class="k">mu</span> ring_truncate(list: [<span class="t">Histogram</span>], k: <span class="t">i64</span>) <span class="o">-&gt;</span> [<span class="t">Histogram</span>]
   <span class="k">requires</span> (k <span class="o">&gt;=</span> <span class="n">0i64</span>)
   <span class="k">ensures</span> (r) hist_list_len(r) <span class="o">&lt;=</span> k
   <span class="k">decreases</span> list
