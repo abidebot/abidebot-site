@@ -31,7 +31,7 @@
   </div>
 </header>
 
-<main>
+<main data-munu-root>
 <section class="page-hero dev-hero"><div class="wrap">
 <div class="eyebrow">For developers</div>
 <h1>munu: the language <span class="grad">AbideBot is written in.</span></h1>
@@ -341,7 +341,7 @@ nu hyperbolic_routing_loop() -&gt; [RoutingEvent] {
 <p class="tmap-note">The honest picture: the compiler, the code shown above and munuOS&rsquo;s first stages exist. The agent&rsquo;s direct use of apps in munuScene, the network, self-hosting and published docs are planned. We will not claim savings or uptime before we can measure them.</p>
 </div></section>
 <section id="early-access-dev" class="alt"><div class="wrap"><div class="cta-box"><div class="eyebrow">Developer beta</div><h2>Build on munu.</h2><p class="sub" style="margin:14px auto 0">The beta is planned for around February 2027, for developers and munu enthusiasts. Join the waitlist on the home page, or write to us at <a class="inl" href="mailto:hello@abidebot.com">hello@abidebot.com</a>.</p><div class="cta-row" style="justify-content:center;margin-top:24px"><a class="btn btn-primary" href="index.html#early-access">Join the beta waitlist &rarr;</a><a class="btn btn-ghost" href="index.html#parts">Back to the product</a></div></div></div></section>
-<template data-munu-hidden id="hist-stub">struct Histogram { n: i64 }
+<p class="mx-status" data-munu-status role="status"></p><template data-munu-hidden id="hist-stub">struct Histogram { n: i64 }
 
 mu hist_list_len(list: [Histogram]) -&gt; i64
   decreases list
@@ -371,5 +371,6 @@ nu hyperbolic_routing_loop() -&gt; [RoutingEvent] {
   </div>
 </footer>
 <script src="assets/main.js"></script>
+<script type="module" src="munu-web/munu-page.js"></script>
 </body>
 </html>

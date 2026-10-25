@@ -1,0 +1,6 @@
+# gzip -9 byte limits. Raise a limit only in a commit the owner approves.
+# wasm target 2.0 MiB, wasm limit 2.5 MiB, js target 15 KiB, js limit 25 KiB.
+wasm_gzip_target 2097152
+wasm_gzip_limit 2621440
+js_gzip_target 15360
+js_gzip_limit 25600
