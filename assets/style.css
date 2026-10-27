@@ -308,7 +308,7 @@ details.mx-hidden p{padding:0 12px 6px;font-size:.78rem}
 .munu-out{font:12px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;color:var(--code-text);background:var(--code-bg);border:1px solid var(--code-line);border-radius:10px;padding:10px 12px;overflow-x:auto}
 .munu-out:empty{display:none}
 .munu-out .ok{color:var(--code-ok)}.munu-out .bad{color:var(--code-bad)}.munu-out .dim{color:var(--code-dim)}
-.munu-out pre{margin:6px 0 0;white-space:pre;font:inherit;color:var(--code-dim)}
+.munu-out pre{margin:6px 0 0;white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;color:var(--code-dim)}
 .xcode mark{background:rgba(var(--code-bad-rgb),.22);color:inherit;border-bottom:2px solid var(--code-bad);border-radius:2px}
 @media (max-width:720px){.mx-badge{font-size:.64rem}.munu-out{font-size:11px}}
 .mx-status{max-width:1100px;margin:0 auto;color:var(--bad);text-align:center}
