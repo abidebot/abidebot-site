@@ -330,3 +330,14 @@ details.mx-hidden p{padding:0 12px 6px;font-size:.78rem}
 .mx-ta:focus-visible{outline:none}
 ::selection{background:rgba(var(--acc-rgb),.3)}
 .mx-btn:focus-visible{outline-offset:1px}
+
+/* network hourglass */
+.hg{margin:0;display:flex;flex-direction:column;align-items:center;gap:6px}
+.hg-row{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:9px 14px;font-size:.88rem;color:var(--text);background:var(--raise);border:1px solid var(--line);border-radius:10px;min-height:42px}
+.hg-w1{width:100%}.hg-w2{width:84%}.hg-w3{width:68%}
+.hg-waist{width:46%;background:rgba(var(--acc-rgb),.16);border-color:rgba(var(--acc-rgb),.55)}
+.hg-waist b{color:var(--a2);font-size:1rem}
+.hg-waist span{font-size:.72rem;color:var(--muted);line-height:1.35}
+.hg figcaption{font-size:.8rem;color:var(--muted);margin-top:8px;text-align:center}
+@media (max-width:720px){.hg-waist{width:72%}.hg-w3{width:84%}.hg-w2{width:92%}}
+.xtxt p+p{margin-top:10px}
