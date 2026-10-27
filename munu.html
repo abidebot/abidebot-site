@@ -125,7 +125,24 @@ mu hist_list_len(list: [Histogram]) -&gt; i64
         y <span class="o">=</span> <span class="n">42</span>;
         x
     }
-}</code></pre></div><div class="xtxt"><span class="xtag">Bind, not assign</span><h3>A name can be declared with its type and no value</h3><p><span class="kwd">x</span> and <span class="kwd">y</span> start with no value, and <span class="kwd">x = y</span> joins them into one variable before either has one; <span class="kwd">P = i64</span> then fixes their shared type, and <span class="kwd">y = 42</span> gives that one variable its value, so <span class="kwd">x</span> reads 42. Every <span class="kwd">=</span> in munu is a bind, and once two things are joined they stay one thing. A model goes only by the text, so what <span class="kwd">x</span> is gets answered by the lines that bind it, not by working out when each line ran.</p></div></div><div class="xrow"><div class="mx"><div class="mx-bar"><span class="mx-badge mx-run" data-munu-badge>Runs</span></div><pre class="xcode" tabindex="0" data-munu="run" data-munu-id="only-what-is-read" data-munu-prelude="count-from" data-munu-entry="only_what_is_read" data-munu-expect="value:1"><code><span class="k">mu</span> first(xs: [<span class="t">i64</span>]) <span class="o">-&gt;</span> <span class="t">i64</span> {
+}</code></pre></div><div class="xtxt"><span class="xtag">Bind, not assign</span><h3>A name can be declared with its type and no value</h3><p><span class="kwd">x</span> and <span class="kwd">y</span> start with no value, and <span class="kwd">x = y</span> joins them into one variable before either has one; <span class="kwd">P = i64</span> then fixes their shared type, and <span class="kwd">y = 42</span> gives that one variable its value, so <span class="kwd">x</span> reads 42. Every <span class="kwd">=</span> in munu is a bind, and once two things are joined they stay one thing. A model goes only by the text, so what <span class="kwd">x</span> is gets answered by the lines that bind it, not by working out when each line ran.</p></div></div><div class="xrow"><div class="mx"><div class="mx-bar"><span class="mx-badge mx-run" data-munu-badge>Runs</span></div><pre class="xcode" tabindex="0" data-munu="run" data-munu-id="spawn-order" data-munu-entry="meet" data-munu-expect="value:25"><code><span class="k">mu</span> add(a: <span class="t">i64</span>, b: <span class="t">i64</span>) <span class="o">-&gt;</span> <span class="t">i64</span> {
+    a, b <span class="o">=&gt;</span> a <span class="o">+</span> b
+}
+
+<span class="k">mu</span> square(n: <span class="t">i64</span>) <span class="o">-&gt;</span> <span class="t">i64</span> {
+    n <span class="o">=&gt;</span> n * n
+}
+
+<span class="k">mu</span> meet() <span class="o">-&gt;</span> <span class="t">i64</span> {
+    _ <span class="o">=&gt;</span> {
+        <span class="k">let</span> x;
+        <span class="k">let</span> y;
+        <span class="k">let</span> total = <span class="k">spawn</span> add(x, y);
+        x = <span class="k">spawn</span> square(<span class="n">3</span>);
+        y = <span class="k">spawn</span> square(<span class="n">4</span>);
+        total
+    }
+}</code></pre></div><div class="xtxt"><span class="xtag">Concurrency</span><h3>Spawned work meets in a variable</h3><p><span class="kwd">meet</span> declares <span class="kwd">x</span> and <span class="kwd">y</span> with no value, spawns <span class="kwd">add(x, y)</span> before either has one, and only then binds them to <span class="kwd">square(3)</span> and <span class="kwd">square(4)</span>, so <span class="kwd">total</span> is 9 + 16 = 25. The variable is the unit of concurrency: <span class="kwd">spawn</span> hands back the variable a result will be bound to and has no say over when a call runs, which the function&rsquo;s declaration settles; <span class="kwd">add</span> waits only where it reads <span class="kwd">x</span> or <span class="kwd">y</span> while they are unbound, and every variable is bound once, so the answer is the same in any order. Move the <span class="kwd">let total</span> line below the two binds and press Run: the value stays 25 and only the step count changes. A model sees only text, never timing, and here every dependency is a named variable in the text, so it can reason about the values on the page and not about an interleaving it cannot observe.</p></div></div><div class="xrow"><div class="mx"><div class="mx-bar"><span class="mx-badge mx-run" data-munu-badge>Runs</span></div><pre class="xcode" tabindex="0" data-munu="run" data-munu-id="only-what-is-read" data-munu-prelude="count-from" data-munu-entry="only_what_is_read" data-munu-expect="value:126"><code><span class="k">mu</span> first(xs: [<span class="t">i64</span>]) <span class="o">-&gt;</span> <span class="t">i64</span> {
     [x <span class="o">|</span> _] <span class="o">=&gt;</span> x,
     [] <span class="o">=&gt;</span> <span class="n">0</span>
 }
@@ -134,11 +151,16 @@ mu hist_list_len(list: [Histogram]) -&gt; i64
     n <span class="o">=&gt;</span> n * n * n
 }
 
+<span class="k">lazy</span> <span class="k">mu</span> share(n: <span class="t">i64</span>) <span class="o">-&gt;</span> <span class="t">i64</span> {
+    n <span class="o">=&gt;</span> <span class="n">100</span> / n
+}
+
 <span class="k">mu</span> only_what_is_read() <span class="o">-&gt;</span> <span class="t">i64</span> {
     _ <span class="o">=&gt;</span> {
-        <span class="k">let</span> c = cube(<span class="n">5</span>);
-        <span class="k">let</span> s = count_from(<span class="n">1</span>);
-        first(s)
+        <span class="k">let</span> a = <span class="k">spawn</span> cube(<span class="n">5</span>);
+        <span class="k">let</span> b = <span class="k">spawn</span> share(<span class="n">0</span>);
+        <span class="k">let</span> s = <span class="k">spawn</span> count_from(<span class="n">1</span>);
+        a <span class="o">+</span> first(s)
     }
 }</code></pre><details class="mx-hidden"><summary>+8 hidden lines</summary><p>Added before the code shown:</p><pre class="mx-ctx"><code>mu is_empty(list: [i64]) -&gt; bool {
     [] =&gt; true,
@@ -148,42 +170,7 @@ mu hist_list_len(list: [Histogram]) -&gt; i64
 nu count_from(n: i64) -&gt; [i64] {
     n =&gt; [n | count_from(n + 1)]
 }
-</code></pre></details></div><div class="xtxt"><span class="xtag">Lazy computation</span><h3>Work happens only when its result is needed</h3><p><span class="kwd">only_what_is_read</span> calls <span class="kwd">cube(5)</span> and <span class="kwd">count_from(1)</span>, but returns only <span class="kwd">first(s)</span>, so it gives 1. <span class="kwd">cube</span> is a <span class="kwd">lazy mu</span>, so the call just makes the variable <span class="kwd">c</span>, and since nothing reads <span class="kwd">c</span>, 5 &times; 5 &times; 5 is never computed; <span class="kwd">count_from</span> is a <span class="kwd">nu</span>, lazy by default, so it produces the one element <span class="kwd">first</span> reads and no more, even though it stands for every number from 1 upward. A transformer can only go by the text it has, and because laziness is written once on the declaration, never at the call, the model can see from the text alone which work happens and which waits until something reads it, without having to simulate an evaluation order it cannot observe.</p></div></div><div class="xrow"><div class="mx"><div class="mx-bar"><span class="mx-badge mx-run" data-munu-badge>Runs</span></div><pre class="xcode" tabindex="0" data-munu="run" data-munu-id="side-by-side" data-munu-prelude="count-from only-what-is-read" data-munu-entry="side_by_side" data-munu-expect="value:35"><code><span class="k">mu</span> square(n: <span class="t">i64</span>) <span class="o">-&gt;</span> <span class="t">i64</span> {
-    n <span class="o">=&gt;</span> n * n
-}
-
-<span class="k">mu</span> side_by_side() <span class="o">-&gt;</span> <span class="t">i64</span> {
-    _ <span class="o">=&gt;</span> {
-        <span class="k">let</span> a = <span class="k">spawn</span> square(<span class="n">3</span>);
-        <span class="k">let</span> b = <span class="k">spawn</span> square(<span class="n">4</span>);
-        <span class="k">let</span> s = <span class="k">spawn</span> count_from(<span class="n">10</span>);
-        a + b + first(s)
-    }
-}</code></pre><details class="mx-hidden"><summary>+24 hidden lines</summary><p>Added before the code shown:</p><pre class="mx-ctx"><code>mu is_empty(list: [i64]) -&gt; bool {
-    [] =&gt; true,
-    [_ | _] =&gt; false
-}
-
-nu count_from(n: i64) -&gt; [i64] {
-    n =&gt; [n | count_from(n + 1)]
-}
-mu first(xs: [i64]) -&gt; i64 {
-    [x | _] =&gt; x,
-    [] =&gt; 0
-}
-
-lazy mu cube(n: i64) -&gt; i64 {
-    n =&gt; n * n * n
-}
-
-mu only_what_is_read() -&gt; i64 {
-    _ =&gt; {
-        let c = cube(5);
-        let s = count_from(1);
-        first(s)
-    }
-}
-</code></pre></details></div><div class="xtxt"><span class="xtag">Concurrency</span><h3>Spawned work meets in a variable</h3><p><span class="kwd">side_by_side</span> spawns <span class="kwd">square(3)</span>, <span class="kwd">square(4)</span> and <span class="kwd">count_from(10)</span>, then adds the two squares and the stream&rsquo;s first element: 9 + 16 + 10, which is 35. <span class="kwd">spawn</span> hands back the variable each result will be bound to, work waits only where something reads a variable not yet bound, and <span class="kwd">spawn</span> has no say over when a call runs: the function settles that. Every variable is bound once, so the answer is the same however the work is scheduled, and a model that sees only text, never timing, can reason about the values on the page and not about an interleaving it cannot observe.</p></div></div><p class="tmap-note">The honest picture: most functions in munu&rsquo;s source have a single case, and multi-case tables like those above are the minority. The short examples on this page (passed-along state, the table, deep patterns, mu and nu, familiar forms, a copied value, the joined names, the lazy calls and the spawned squares) are written for it; the others are from munu&rsquo;s source. The fit with a transformer is a design rationale and a likeness of shape only: munu does not compile to attention, and we have not measured that it lowers error rates. Effects such as receiving a message happen through calls, not through syntax. In our own tests the language is not more compact than mainstream languages. Its advantage is structure, not size.</p></div></section>
+</code></pre></details></div><div class="xtxt"><span class="xtag">Lazy computation</span><h3>Work happens only when its result is needed</h3><p><span class="kwd">only_what_is_read</span> spawns <span class="kwd">cube(5)</span>, <span class="kwd">share(0)</span> and <span class="kwd">count_from(1)</span>, but reads only <span class="kwd">cube(5)</span> and the head of the stream, so it gives 125 + 1 = 126. <span class="kwd">spawn</span> hands back each result&rsquo;s variable and has no say over when the work runs: <span class="kwd">cube</span> and <span class="kwd">share</span> are declared <span class="kwd">lazy mu</span>, so each body runs only when something reads its variable, and since nothing reads <span class="kwd">b</span>, <span class="kwd">100 / 0</span> never runs; <span class="kwd">count_from</span> is a <span class="kwd">nu</span>, lazy by default, so <span class="kwd">first</span> gets one element and no more. Change <span class="kwd">a + first(s)</span> to <span class="kwd">a + b + first(s)</span> and press Run: now <span class="kwd">b</span> is read, <span class="kwd">share(0)</span> runs, and the program crashes with <span class="kwd">DivideByZero</span>. Laziness is written once on the declaration, never at the call, so the model can see from the text alone which work happens and which waits until something reads it, without simulating an evaluation order it cannot observe.</p></div></div><p class="tmap-note">The honest picture: most functions in munu&rsquo;s source have a single case, and multi-case tables like those above are the minority. The short examples on this page (passed-along state, the table, deep patterns, mu and nu, familiar forms, a copied value, the joined names, the spawned consumer and the lazy calls) are written for it; the others are from munu&rsquo;s source. The fit with a transformer is a design rationale and a likeness of shape only: munu does not compile to attention, and we have not measured that it lowers error rates. Effects such as receiving a message happen through calls, not through syntax. In our own tests the language is not more compact than mainstream languages. Its advantage is structure, not size.</p></div></section>
 <section id="language"><div class="wrap"><div class="head center"><div class="eyebrow">Contracts and supervision</div><h2>Recovery is <span class="grad">part of the program.</span></h2><p class="sub">A contract is munu&rsquo;s unit of work, supervision and security. How it recovers and how fast it must answer are written as mu-calculus formulas and constants in the code, so they sit in the text the model is writing, and the compiler turns them into checks.</p></div><div class="xrows"><div class="xrow"><div class="mx"><div class="mx-bar"><span class="mx-badge mx-error" data-munu-badge>Shows a compile error</span></div><pre class="xcode" tabindex="0" data-munu="error" data-munu-id="recovery" data-munu-module="page_recovery" data-munu-prelude="recovery-stub" data-munu-expect="kind:PortModeRequiresWildcardFailDeadline"><code><span class="k">pub</span> <span class="k">contract</span> <span class="t">Ward</span>() <span class="o">-&gt;</span> [<span class="t">u64</span>]
     <span class="k">substrate</span> { bytecode }
     <span class="k">behaviour</span> {
