@@ -148,7 +148,7 @@ mu hist_list_len(list: [Histogram]) -&gt; i64
 nu count_from(n: i64) -&gt; [i64] {
     n =&gt; [n | count_from(n + 1)]
 }
-</code></pre></details></div><div class="xtxt"><span class="xtag">Lazy computation</span><h3>Work happens only when its result is needed</h3><p>Laziness belongs to the function. It is written once, where the function is declared, and never at the call. A plain <span class="kwd">mu</span> is eager, so <span class="kwd">first</span> does its work as soon as it is called. <span class="kwd">cube</span> is declared <span class="kwd">lazy mu</span>: calling it only makes the variable its result will be bound to, and the body runs when something reads that variable. Nothing reads <span class="kwd">c</span>, so <span class="kwd">cube</span> never multiplies at all. A <span class="kwd">nu</span> is lazy unless it is declared <span class="kwd">eager nu</span>: <span class="kwd">count_from</span> stands for every number from 1 upward, but <span class="kwd">first</span> reads only the head, so one element is produced and no more. <span class="kwd">only_what_is_read</span> gives 1, and the work nobody asked for is never done.</p></div></div><div class="xrow"><div class="mx"><div class="mx-bar"><span class="mx-badge mx-check" data-munu-badge>Type-checks</span></div><pre class="xcode" tabindex="0" data-munu="check" data-munu-id="side-by-side" data-munu-prelude="count-from only-what-is-read" data-munu-expect="ok"><code><span class="k">mu</span> square(n: <span class="t">i64</span>) <span class="o">-&gt;</span> <span class="t">i64</span> {
+</code></pre></details></div><div class="xtxt"><span class="xtag">Lazy computation</span><h3>Work happens only when its result is needed</h3><p>Laziness belongs to the function. It is written once, where the function is declared, and never at the call. A plain <span class="kwd">mu</span> is eager, so <span class="kwd">first</span> does its work as soon as it is called. <span class="kwd">cube</span> is declared <span class="kwd">lazy mu</span>: calling it only makes the variable its result will be bound to, and the body runs when something reads that variable. Nothing reads <span class="kwd">c</span>, so <span class="kwd">cube</span> never multiplies at all. A <span class="kwd">nu</span> is lazy unless it is declared <span class="kwd">eager nu</span>: <span class="kwd">count_from</span> stands for every number from 1 upward, but <span class="kwd">first</span> reads only the head, so one element is produced and no more. <span class="kwd">only_what_is_read</span> gives 1, and the work nobody asked for is never done.</p></div></div><div class="xrow"><div class="mx"><div class="mx-bar"><span class="mx-badge mx-run" data-munu-badge>Runs</span></div><pre class="xcode" tabindex="0" data-munu="run" data-munu-id="side-by-side" data-munu-prelude="count-from only-what-is-read" data-munu-entry="side_by_side" data-munu-expect="value:35"><code><span class="k">mu</span> square(n: <span class="t">i64</span>) <span class="o">-&gt;</span> <span class="t">i64</span> {
     n <span class="o">=&gt;</span> n * n
 }
 
@@ -194,55 +194,63 @@ mu only_what_is_read() -&gt; i64 {
 { start_corporal(up_stream, down_stream) }</code></pre><details class="mx-hidden"><summary>+3 hidden lines</summary><p>Added before the code shown:</p><pre class="mx-ctx"><code>nu start_corporal(up_stream: [i64], down_stream: [i64]) -&gt; [u64] {
     up_stream, down_stream =&gt; [0u64 | start_corporal(up_stream, down_stream)]
 }
-</code></pre></details></div><div class="xtxt"><span class="xtag">Supervision strategy</span><h3>How a bot recovers is written down, not configured</h3><p>The recovery rule is a mu-calculus formula: on any failure, restart, and keep doing that for as long as the component runs. Each component names its rule in its header (<span class="kwd">do:</span> is what it does, <span class="kwd">must:</span> is what it is held to), and the compiler turns the formula into a state machine at build time.</p></div></div><div class="xrow"><div class="mx"><div class="mx-bar"><span class="mx-badge mx-check" data-munu-badge>Type-checks</span></div><pre class="xcode" tabindex="0" data-munu="check" data-munu-id="supervision-tree" data-munu-module="page_supervision" data-munu-expect="ok"><code><span class="k">enum</span> <span class="t">Failure</span> { <span class="t">Lost</span> }
-<span class="k">enum</span> <span class="t">Report</span> { <span class="t">ChildFailed</span>(<span class="t">u64</span>, <span class="t">u64</span>), <span class="t">ChildDone</span>(<span class="t">u64</span>) }
+</code></pre></details></div><div class="xtxt"><span class="xtag">Supervision strategy</span><h3>How a bot recovers is written down, not configured</h3><p>The recovery rule is a mu-calculus formula: on any failure, restart, and keep doing that for as long as the component runs. Each component names its rule in its header (<span class="kwd">do:</span> is what it does, <span class="kwd">must:</span> is what it is held to), and the compiler turns the formula into a state machine at build time.</p></div></div><div class="xrow"><div class="mx"><div class="mx-bar"><span class="mx-badge mx-run" data-munu-badge>Runs</span></div><pre class="xcode" tabindex="0" data-munu="run" data-munu-id="supervision-tree" data-munu-module="page_supervision" data-munu-entry="Major" data-munu-expect="prefix:[1, 2, 1, 1"><code><span class="k">enum</span> <span class="t">Failure</span> { <span class="t">Lost</span>, <span class="t">Wounded</span> }
+<span class="k">enum</span> <span class="t">Report</span> { <span class="t">Reading</span>(<span class="t">u64</span>), <span class="t">ChildFailed</span>(<span class="t">u64</span>, <span class="t">u64</span>), <span class="t">ChildDone</span>(<span class="t">u64</span>) }
+
 <span class="k">const</span> <span class="t">REPORTS_BOUND</span> = <span class="n">8u64</span>;
+<span class="k">const</span> <span class="t">ALPHA</span> = <span class="n">1u64</span>;
+<span class="k">const</span> <span class="t">BRAVO</span> = <span class="n">2u64</span>;
 <span class="k">cdf</span> <span class="t">RESPONSE</span> {
-    dmax: <span class="n">200</span>ms,
-    handup: <span class="n">50</span>ms,
-    expected: [(<span class="n">10</span>ms, <span class="n">0.9</span>), (<span class="n">50</span>ms, <span class="n">0.99</span>), (<span class="n">200</span>ms, <span class="n">1.0</span>)]
+    dmax: <span class="n">200ms</span>,
+    handup: <span class="n">50ms</span>,
+    expected: [(<span class="n">10ms</span>, <span class="n">0.9</span>), (<span class="n">50ms</span>, <span class="n">0.99</span>), (<span class="n">200ms</span>, <span class="n">1.0</span>)]
 }
 
-<span class="k">eager</span> <span class="k">nu</span> drill(x: <span class="t">u64</span>) <span class="o">-&gt;</span> [<span class="t">u64</span>] {
-    <span class="n">0u64</span> <span class="o">=&gt;</span> <span class="k">crash</span> <span class="t">Failure</span>::<span class="t">Lost</span>,
-    x <span class="o">=&gt;</span> [x <span class="o">|</span> drill(x)]
+<span class="k">eager</span> <span class="k">nu</span> drill(id: <span class="t">u64</span>, out: [<span class="t">Report</span>].end) <span class="o">-&gt;</span> [<span class="t">u64</span>] {
+    id, out when id == <span class="t">ALPHA</span> <span class="o">=&gt;</span> {
+        <span class="k">let</span> _ = send(out, <span class="t">Report</span>::<span class="t">Reading</span>(id));
+        <span class="k">crash</span> <span class="t">Failure</span>::<span class="t">Lost</span>
+    },
+    id, out <span class="o">=&gt;</span> {
+        <span class="k">let</span> _ = send(out, <span class="t">Report</span>::<span class="t">Reading</span>(id));
+        <span class="k">crash</span> <span class="t">Failure</span>::<span class="t">Wounded</span>
+    }
 }
 
-<span class="k">pub</span> <span class="k">contract</span> <span class="t">Corporal</span>(x: <span class="t">u64</span>) <span class="o">-&gt;</span> [<span class="t">u64</span>]
+<span class="k">pub</span> <span class="k">contract</span> <span class="t">Corporal</span>(id: <span class="t">u64</span>, out: [<span class="t">Report</span>].end) <span class="o">-&gt;</span> [<span class="t">u64</span>]
     <span class="k">substrate</span> { bytecode }
-{ drill(x) }
+{ drill(id, out) }
 
 <span class="k">eager</span> <span class="k">nu</span> command(rs: [<span class="t">Report</span>]) <span class="o">-&gt;</span> [<span class="t">u64</span>] {
+    [] <span class="o">=&gt;</span> [],
     [r <span class="o">|</span> rest] <span class="o">=&gt;</span> <span class="k">match</span> r {
-        <span class="t">Report</span>::<span class="t">ChildFailed</span>(slot, reason) <span class="o">=&gt;</span> [slot <span class="o">|</span> command(rest)]
-    },
-    [] <span class="o">=&gt;</span> []
+        <span class="t">Report</span>::<span class="t">Reading</span>(id) <span class="o">=&gt;</span> [id <span class="o">|</span> command(rest)]
+    }
 }
 
-<span class="k">pub</span> <span class="k">contract</span> <span class="t">Major</span>(a: <span class="t">u64</span>, b: <span class="t">u64</span>) <span class="o">-&gt;</span> [<span class="t">u64</span>]
+<span class="k">pub</span> <span class="k">contract</span> <span class="t">Major</span>() <span class="o">-&gt;</span> [<span class="t">u64</span>]
     <span class="k">substrate</span> { bytecode }
     <span class="k">behaviour</span> {
         <span class="k">do</span>: <span class="k">nu</span> <span class="t">X</span>. [fail(alpha, <span class="t">Failure</span>::<span class="t">Lost</span>)] <span class="o">&lt;</span>restart(alpha)<span class="o">&gt;</span> <span class="t">X</span>
-                  <span class="k">and</span> [done(alpha)] <span class="o">&lt;</span>absorb(alpha)<span class="o">&gt;</span> <span class="t">X</span>
-                  <span class="k">and</span> [fail(bravo, _)] <span class="o">&lt;</span>restart(self)<span class="o">&gt;</span> <span class="t">X</span>
+                  <span class="k">and</span> [fail(bravo, <span class="t">Failure</span>::<span class="t">Wounded</span>)] <span class="o">&lt;</span>absorb(bravo)<span class="o">&gt;</span> <span class="t">X</span>
                   <span class="k">and</span> [_] <span class="t">X</span>
-        <span class="k">must</span>: <span class="k">nu</span> <span class="t">X</span>. [fail(!self, _)]~deadline(<span class="t">RESPONSE</span>) <span class="t">X</span>
+        <span class="k">must</span>: <span class="k">nu</span> <span class="t">X</span>. [fail(!self, _)]<span class="o">~</span>deadline(<span class="t">RESPONSE</span>) <span class="t">X</span>
     }
     <span class="k">children</span> { alpha: <span class="t">Corporal</span>, bravo: <span class="t">Corporal</span> }
     <span class="k">ports</span> {
         reports: [<span class="t">Report</span>] {
-            ends: r1
-            bound: <span class="t">REPORTS_BOUND</span>
+            <span class="k">ends</span>: a, b
+            <span class="k">bound</span>: <span class="t">REPORTS_BOUND</span>
             <span class="k">do</span>: <span class="k">nu</span> <span class="t">X</span>. [_] <span class="t">X</span>
             <span class="k">must</span>: <span class="k">true</span>
         }
     }
 {
-    <span class="k">let</span> self.alpha = <span class="k">spawn</span> <span class="t">Corporal</span>(a);
-    <span class="k">let</span> self.bravo = <span class="k">spawn</span> <span class="t">Corporal</span>(b);
+    <span class="k">let</span> self.alpha = <span class="k">spawn</span> <span class="t">Corporal</span>(<span class="t">ALPHA</span>, reports.a);
+    <span class="k">let</span> self.bravo = <span class="k">spawn</span> <span class="t">Corporal</span>(<span class="t">BRAVO</span>, reports.b);
     command(reports)
 }</code></pre><details class="mx-hidden"><summary>+1 hidden line</summary><p>Added before the code shown:</p><pre class="mx-ctx"><code>module page_supervision
-</code></pre></details></div><div class="xtxt"><span class="xtag">Supervision tree</span><h3>A major runs two corporals and answers each one differently</h3><p>A contract&rsquo;s body can start other contracts. <span class="kwd">Major</span> declares two positions under <span class="kwd">children</span> and spawns a <span class="kwd">Corporal</span> into each, <span class="kwd">alpha</span> from <span class="kwd">a</span> and <span class="kwd">bravo</span> from <span class="kwd">b</span>. Then it hands over to <span class="kwd">command</span>, which reads the reports the kernel files on the <span class="kwd">reports</span> port when a child fails or finishes. The major supervises both corporals, and a corporal&rsquo;s failure is answered by the major&rsquo;s rules, one line per case. If <span class="kwd">alpha</span> fails with <span class="kwd">Failure::Lost</span>, only <span class="kwd">alpha</span> is restarted, from the argument it was first given. If <span class="kwd">bravo</span> fails for any reason, the whole major restarts, so both corporals start again from <span class="kwd">a</span> and <span class="kwd">b</span>. A corporal that finishes is absorbed. The <span class="kwd">must:</span> line holds the major to the timing in <span class="kwd">RESPONSE</span>, a distribution rather than a single number: 90% of its answers to a child&rsquo;s failure within 10ms, 99% within 50ms, and every one within 200ms, the hard limit. Spawning a corporal only binds its position. When its work runs is settled by <span class="kwd">drill</span>, an <span class="kwd">eager nu</span>, not by <span class="kwd">spawn</span>. The compiler also checks the other side: an answer to a failure a child can never raise is refused at compile time. Written for this page, following the shapes in the compiler&rsquo;s own tests.</p></div></div><div class="xrow"><div class="mx"><div class="mx-bar"><span class="mx-badge mx-run" data-munu-badge>Runs</span></div><pre class="xcode" tabindex="0" data-munu="run" data-munu-id="first-object" data-munu-module="page_failures" data-munu-call="first_object([7u64])" data-munu-type="u64" data-munu-expect="value:7"><code><span class="k">pub</span> <span class="k">enum</span> <span class="t">FetchFailure</span> { <span class="t">EndedWithoutObject</span> }
+</code></pre></details></div><div class="xtxt"><span class="xtag">Supervision tree</span><h3>A major restarts one corporal and absorbs the other&rsquo;s failure</h3><p>A contract&rsquo;s body can start other contracts. <span class="kwd">Major</span> declares two positions under <span class="kwd">children</span>, <span class="kwd">alpha</span> and <span class="kwd">bravo</span>, and spawns a <span class="kwd">Corporal</span> into each, giving each its own end of the <span class="kwd">reports</span> port (<span class="kwd">reports.a</span> and <span class="kwd">reports.b</span>). Each corporal sends one reading on its end, its own number, and then crashes: alpha with <span class="kwd">Failure::Lost</span>, bravo with <span class="kwd">Failure::Wounded</span>. Major answers each failure by its own rule, one line per case. <span class="kwd">Lost</span> on alpha is answered by <span class="kwd">restart(alpha)</span>: alpha is started again from the arguments it was first given, so it reports 1 again and fails again. <span class="kwd">Wounded</span> on bravo is answered by <span class="kwd">absorb(bravo)</span>: bravo&rsquo;s position stays empty and Major carries on without it. <span class="kwd">command</span> reads the readings off the port and returns the numbers, so the result begins 1, 2, for the first readings from alpha and bravo, and then keeps giving 1 as alpha restarts. The <span class="kwd">must:</span> line holds the major to the timing in <span class="kwd">RESPONSE</span>, a distribution rather than a single number: 90% of its answers to a child&rsquo;s failure within 10ms, 99% within 50ms, and every one within 200ms, the hard limit. Because alpha restarts forever, the stream never ends, so the run on this page is bounded by a step limit and shows the readings up to that point. Spawning a corporal only binds its position. When its work runs is settled by the function, here <span class="kwd">drill</span>, an <span class="kwd">eager nu</span>, not by <span class="kwd">spawn</span>; and munu is deterministic, so the same readings come out on every run. Written for this page.</p></div></div><div class="xrow"><div class="mx"><div class="mx-bar"><span class="mx-badge mx-run" data-munu-badge>Runs</span></div><pre class="xcode" tabindex="0" data-munu="run" data-munu-id="first-object" data-munu-module="page_failures" data-munu-call="first_object([7u64])" data-munu-type="u64" data-munu-expect="value:7"><code><span class="k">pub</span> <span class="k">enum</span> <span class="t">FetchFailure</span> { <span class="t">EndedWithoutObject</span> }
 
 <span class="k">pub</span> <span class="k">mu</span> first_object(objects: [<span class="t">u64</span>]) <span class="o">-&gt;</span> <span class="t">u64</span> {
     [] <span class="o">=&gt;</span> <span class="k">crash</span> <span class="t">FetchFailure</span>::<span class="t">EndedWithoutObject</span>,

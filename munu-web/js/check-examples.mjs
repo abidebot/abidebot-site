@@ -7,6 +7,7 @@ const SEED_LEN = 32;
 const DEFAULT_TIME_MS = 2000;
 const FUEL_LIMIT = 40;
 const VALUE_PREFIX = "value:";
+const STREAM_PREFIX = "prefix:";
 const KIND_PREFIX = "kind:";
 const EXPECT_OK = "ok";
 const EXPECT_UNVERIFIED = "unverified";
@@ -314,6 +315,16 @@ function assertExample(example, source) {
     }
     if (example.mode === MODE_RUN) {
         const result = munu.run(source, example.entry, { deterministic: true });
+        if (example.expect !== null && example.expect.startsWith(STREAM_PREFIX)) {
+            // A stream that never ends: the run stops at its step limit and keeps a prefix.
+            const want = example.expect.slice(STREAM_PREFIX.length);
+            if (result.outcome !== "fuel-exhausted" || result.bounded !== true) {
+                fail(`${example.id} outcome ${result.outcome}, expected a bounded stop: ${JSON.stringify(result)}`);
+            } else if (typeof result.value !== "string" || !result.value.startsWith(want)) {
+                fail(`${example.id} value ${JSON.stringify(result.value)} does not start with ${JSON.stringify(want)}`);
+            }
+            return;
+        }
         if (result.outcome !== "halted") {
             fail(`${example.id} outcome ${result.outcome}: ${JSON.stringify(result)}`);
             return;

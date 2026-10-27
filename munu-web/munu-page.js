@@ -6,6 +6,7 @@ import { highlight } from "./munu-highlight.js";
 
 const BUTTON = { run: "\u25B6 Run", check: "\u2713 Check", error: "\u2713 Check" };
 const RUN_OPTS = { timeMs: 2000 };
+const SHOWN_VALUES = 16;
 const INDENT = "    ";
 let client = null;
 // The code each block had when the page loaded. Preludes always use this text.
@@ -146,6 +147,13 @@ function showRun(out, pre, result, assembled) {
     } else if (result.outcome === "crashed") {
         const where = result.crash?.func ? ` in ${result.crash.func}` : "";
         out.append(el("div", "bad", `Crashed${where}: ${result.crash?.reason ?? "unknown reason"}`), el("div", "dim", `${steps}`));
+    } else if (result.outcome === "fuel-exhausted" && result.bounded && result.output?.values?.length) {
+        // A stream that never ends: show the readings up to the limit, not a failure.
+        const shown = result.output.values.slice(0, SHOWN_VALUES);
+        const more = result.output.values.length > shown.length || result.output.truncated ? ", \u2026" : "";
+        const type = result.type ? ` : ${result.type}` : "";
+        out.append(el("div", "ok", `${plural(result.output.values.length, "value")} before the limit: [${shown.join(", ")}${more}]${type}`),
+            el("div", "dim", `Stopped at its step limit, because the stream does not end. ${steps}`));
     } else if (result.outcome === "compile-error") {
         showDiagnostics(out, pre, result.diagnostics ?? [], assembled);
     } else {
