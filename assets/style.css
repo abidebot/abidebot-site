@@ -342,11 +342,7 @@ details.mx-hidden p{padding:0 12px 6px;font-size:.78rem}
 @media (max-width:720px){.hg-waist{width:72%}.hg-w3{width:84%}.hg-w2{width:92%}}
 .xtxt p+p{margin-top:10px}
 
-/* Teaching aids on the munu page: typical-today snippets, Try lines, compiler messages, trait map, glossary */
-.xtyp{margin:12px 0 0;padding:10px 12px 12px;border:1px dashed var(--line);border-radius:12px;background:transparent}
-.xtyp figcaption{font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
-.xtyp pre{margin:0;overflow-x:auto;font:12px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;color:var(--muted);tab-size:2;-webkit-overflow-scrolling:touch}
-.xtyp code{font:inherit;white-space:pre}
+/* Teaching aids on the munu page: Try lines, compiler messages, trait map, glossary */
 .xtry,.xsays{margin:12px 0 0;padding:8px 12px;border-radius:0 10px 10px 0;font-size:.88rem;line-height:1.55;overflow-wrap:anywhere}
 .xtry{border-left:3px solid var(--ok);background:rgba(var(--ok-rgb),.1)}
 .xsays{border-left:3px solid var(--bad);background:rgba(var(--bad-rgb),.07)}
