@@ -184,17 +184,61 @@ mu only_what_is_read() -&gt; i64 {
     }
 }
 </code></pre></details></div><div class="xtxt"><span class="xtag">Concurrency</span><h3>Spawned work meets in a variable</h3><p><span class="kwd">spawn</span> hands back the variable a call&rsquo;s result will be bound to: <span class="kwd">a</span> and <span class="kwd">b</span> for the squares, and the stream <span class="kwd">s</span> for <span class="kwd">count_from</span>. That variable is the unit of concurrency in munu. Work goes on independently until something reads a variable that is not yet bound, and only there does it wait. When each call runs is not up to <span class="kwd">spawn</span>: the function itself settles that, as in the row above. Every variable is bound once, so <span class="kwd">side_by_side</span> gives 35, that is 9&nbsp;+&nbsp;16&nbsp;+&nbsp;10, however the work is scheduled. A contract is spawned the same way into a named position, written <span class="kwd">let self.pos = spawn C(args);</span>, where its supervisor restarts it from the arguments it was first given.</p></div></div><p class="tmap-note">The honest picture: most functions in munu&rsquo;s source have a single case, and multi-case tables like those above are the minority. The short examples on this page (passed-along state, the table, deep patterns, mu and nu, familiar forms, a copied value, the joined names, the lazy calls and the spawned squares) are written for it; the others are from munu&rsquo;s source. The likeness to attention is one of shape only: munu does not compile to attention. Effects such as receiving a message happen through calls, not through syntax. In our own tests the language is not more compact than mainstream languages. Its advantage is structure, not size.</p></div></section>
-<section id="language"><div class="wrap"><div class="head center"><div class="eyebrow">Contracts and supervision</div><h2>Recovery is <span class="grad">part of the program.</span></h2><p class="sub">A contract is munu&rsquo;s unit of work, supervision and security. How it recovers and how fast it must answer are written as mu-calculus formulas and constants in the code, and the compiler turns them into checks.</p></div><div class="xrows"><div class="xrow"><div class="mx"><div class="mx-bar"><span class="mx-badge mx-check" data-munu-badge>Type-checks</span></div><pre class="xcode" tabindex="0" data-munu="check" data-munu-id="corporal" data-munu-prelude="corporal-stub" data-munu-expect="ok"><code><span class="k">formula</span> permanent() {
-    <span class="k">nu</span> <span class="t">X</span>. [fail(self, _)] <span class="o">&lt;</span>restart(self)<span class="o">&gt;</span> <span class="t">X</span> <span class="k">and</span> [_] <span class="t">X</span>
+<section id="language"><div class="wrap"><div class="head center"><div class="eyebrow">Contracts and supervision</div><h2>Recovery is <span class="grad">part of the program.</span></h2><p class="sub">A contract is munu&rsquo;s unit of work, supervision and security. How it recovers and how fast it must answer are written as mu-calculus formulas and constants in the code, and the compiler turns them into checks.</p></div><div class="xrows"><div class="xrow"><div class="mx"><div class="mx-bar"><span class="mx-badge mx-run" data-munu-badge>Runs</span></div><pre class="xcode" tabindex="0" data-munu="run" data-munu-id="recovery" data-munu-module="page_recovery" data-munu-entry="Ward" data-munu-expect="value:[1, 2]"><code><span class="k">enum</span> <span class="t">Failure</span> { <span class="t">Wounded</span> }
+<span class="k">enum</span> <span class="t">Report</span> { <span class="t">Reading</span>(<span class="t">u64</span>), <span class="t">ChildFailed</span>(<span class="t">u64</span>, <span class="t">u64</span>), <span class="t">ChildDone</span>(<span class="t">u64</span>) }
+
+<span class="k">const</span> <span class="t">REPORTS_BOUND</span> = <span class="n">8u64</span>;
+<span class="k">const</span> <span class="t">ADA</span> = <span class="n">1u64</span>;
+<span class="k">const</span> <span class="t">BO</span> = <span class="n">2u64</span>;
+<span class="k">const</span> <span class="t">CHILDREN</span> = <span class="n">2u64</span>;
+<span class="k">cdf</span> <span class="t">RESPONSE</span> {
+    dmax: <span class="n">200ms</span>,
+    handup: <span class="n">50ms</span>,
+    expected: [(<span class="n">10ms</span>, <span class="n">0.9</span>), (<span class="n">50ms</span>, <span class="n">0.99</span>), (<span class="n">200ms</span>, <span class="n">1.0</span>)]
 }
 
-<span class="k">pub</span> <span class="k">contract</span> <span class="t">Corporal</span>(up_stream: [<span class="t">i64</span>], down_stream: [<span class="t">i64</span>]) <span class="o">-&gt;</span> [<span class="t">u64</span>]
-    <span class="k">substrate</span> { bytecode }
-    <span class="k">behaviour</span> { <span class="k">do</span>: permanent() <span class="k">must</span>: permanent() }
-{ start_corporal(up_stream, down_stream) }</code></pre><details class="mx-hidden"><summary>+3 hidden lines</summary><p>Added before the code shown:</p><pre class="mx-ctx"><code>nu start_corporal(up_stream: [i64], down_stream: [i64]) -&gt; [u64] {
-    up_stream, down_stream =&gt; [0u64 | start_corporal(up_stream, down_stream)]
+<span class="k">eager</span> <span class="k">nu</span> attend(id: <span class="t">u64</span>, out: [<span class="t">Report</span>].end) <span class="o">-&gt;</span> [<span class="t">u64</span>] {
+    id, out <span class="o">=&gt;</span> {
+        <span class="k">let</span> _ = send(out, <span class="t">Report</span>::<span class="t">Reading</span>(id));
+        <span class="k">crash</span> <span class="t">Failure</span>::<span class="t">Wounded</span>
+    }
 }
-</code></pre></details></div><div class="xtxt"><span class="xtag">Supervision strategy</span><h3>How a bot recovers is written down, not configured</h3><p>The recovery rule is a mu-calculus formula: on any failure, restart, and keep doing that for as long as the component runs. Each component names its rule in its header (<span class="kwd">do:</span> is what it does, <span class="kwd">must:</span> is what it is held to), and the compiler turns the formula into a state machine at build time.</p></div></div><div class="xrow"><div class="mx"><div class="mx-bar"><span class="mx-badge mx-run" data-munu-badge>Runs</span></div><pre class="xcode" tabindex="0" data-munu="run" data-munu-id="supervision-tree" data-munu-module="page_supervision" data-munu-entry="Major" data-munu-expect="prefix:[1, 2, 1, 1"><code><span class="k">enum</span> <span class="t">Failure</span> { <span class="t">Lost</span>, <span class="t">Wounded</span> }
+
+<span class="k">pub</span> <span class="k">contract</span> <span class="t">Medic</span>(id: <span class="t">u64</span>, out: [<span class="t">Report</span>].end) <span class="o">-&gt;</span> [<span class="t">u64</span>]
+    <span class="k">substrate</span> { bytecode }
+{ attend(id, out) }
+
+<span class="k">eager</span> <span class="k">nu</span> collect(rs: [<span class="t">Report</span>], left: <span class="t">u64</span>) <span class="o">-&gt;</span> [<span class="t">u64</span>] {
+    _, <span class="n">0u64</span> <span class="o">=&gt;</span> [],
+    [], _ <span class="o">=&gt;</span> [],
+    [r <span class="o">|</span> rest], left <span class="o">=&gt;</span> <span class="k">match</span> r {
+        <span class="t">Report</span>::<span class="t">Reading</span>(id) <span class="o">=&gt;</span> [id <span class="o">|</span> collect(rest, left - <span class="n">1u64</span>)]
+    }
+}
+
+<span class="k">pub</span> <span class="k">contract</span> <span class="t">Ward</span>() <span class="o">-&gt;</span> [<span class="t">u64</span>]
+    <span class="k">substrate</span> { bytecode }
+    <span class="k">behaviour</span> {
+        <span class="k">do</span>: <span class="k">nu</span> <span class="t">X</span>. [fail(ada, <span class="t">Failure</span>::<span class="t">Wounded</span>)] <span class="o">&lt;</span>absorb(ada)<span class="o">&gt;</span> <span class="t">X</span>
+                  <span class="k">and</span> [fail(bo, <span class="t">Failure</span>::<span class="t">Wounded</span>)] <span class="o">&lt;</span>absorb(bo)<span class="o">&gt;</span> <span class="t">X</span>
+                  <span class="k">and</span> [_] <span class="t">X</span>
+        <span class="k">must</span>: <span class="k">nu</span> <span class="t">X</span>. [fail(!self, _)]<span class="o">~</span>deadline(<span class="t">RESPONSE</span>) <span class="t">X</span>
+    }
+    <span class="k">children</span> { ada: <span class="t">Medic</span>, bo: <span class="t">Medic</span> }
+    <span class="k">ports</span> {
+        reports: [<span class="t">Report</span>] {
+            <span class="k">ends</span>: a, b
+            <span class="k">bound</span>: <span class="t">REPORTS_BOUND</span>
+            <span class="k">do</span>: <span class="k">nu</span> <span class="t">X</span>. [_] <span class="t">X</span>
+            <span class="k">must</span>: <span class="k">true</span>
+        }
+    }
+{
+    <span class="k">let</span> self.ada = <span class="k">spawn</span> <span class="t">Medic</span>(<span class="t">ADA</span>, reports.a);
+    <span class="k">let</span> self.bo = <span class="k">spawn</span> <span class="t">Medic</span>(<span class="t">BO</span>, reports.b);
+    collect(reports, <span class="t">CHILDREN</span>)
+}</code></pre><details class="mx-hidden"><summary>+1 hidden line</summary><p>Added before the code shown:</p><pre class="mx-ctx"><code>module page_recovery
+</code></pre></details></div><div class="xtxt"><span class="xtag">Supervision strategy</span><h3>How a bot recovers is written down, not configured</h3><p>The recovery rule is a mu-calculus formula, and restarting is only one answer it can give. <span class="kwd">Ward</span> starts two medics under <span class="kwd">children</span>, <span class="kwd">ada</span> and <span class="kwd">bo</span>, and gives each its own end of the <span class="kwd">reports</span> port. Each medic sends one reading, its own number, and then crashes with <span class="kwd">Failure::Wounded</span>. The <span class="kwd">do:</span> line says what Ward does about each failure, one rule per child: <span class="kwd">absorb(ada)</span> and <span class="kwd">absorb(bo)</span>. To absorb a failed child is to leave its position empty and carry on without it. Nothing is started again, so no medic fails twice and the run ends. The final <span class="kwd">[_] X</span> leaves every other action alone, and the <span class="kwd">must:</span> line holds Ward to the timing in <span class="kwd">RESPONSE</span>, a distribution rather than a single number: 90% of its answers to a child&rsquo;s failure within 10ms, 99% within 50ms, and every one within 200ms. A port stays open after a child is absorbed, so the end of this run comes from Ward and not from the port: <span class="kwd">collect</span> takes one reading for each child, <span class="kwd">CHILDREN</span> of them, and stops, which gives 1, 2. To reach bo&rsquo;s reading it first passes ada&rsquo;s failure, and that is where ada is absorbed. When a medic runs is settled by the function, here <span class="kwd">attend</span>, an <span class="kwd">eager nu</span>, not by <span class="kwd">spawn</span>; and munu is deterministic, so the same two readings come out on every run. The next row shows the other answer, <span class="kwd">restart</span>. Written for this page.</p></div></div><div class="xrow"><div class="mx"><div class="mx-bar"><span class="mx-badge mx-run" data-munu-badge>Runs</span></div><pre class="xcode" tabindex="0" data-munu="run" data-munu-id="supervision-tree" data-munu-module="page_supervision" data-munu-entry="Major" data-munu-expect="prefix:[1, 2, 1, 1"><code><span class="k">enum</span> <span class="t">Failure</span> { <span class="t">Lost</span>, <span class="t">Wounded</span> }
 <span class="k">enum</span> <span class="t">Report</span> { <span class="t">Reading</span>(<span class="t">u64</span>), <span class="t">ChildFailed</span>(<span class="t">u64</span>, <span class="t">u64</span>), <span class="t">ChildDone</span>(<span class="t">u64</span>) }
 
 <span class="k">const</span> <span class="t">REPORTS_BOUND</span> = <span class="n">8u64</span>;
@@ -359,9 +403,6 @@ mu hist_list_len(list: [Histogram]) -&gt; i64
 {
     [] =&gt; 0i64,
     [_ | tail] =&gt; 1i64 + hist_list_len(tail)
-}
-</template><template data-munu-hidden id="corporal-stub">nu start_corporal(up_stream: [i64], down_stream: [i64]) -&gt; [u64] {
-    up_stream, down_stream =&gt; [0u64 | start_corporal(up_stream, down_stream)]
 }
 </template><template data-munu-hidden id="fetcher-stub">nu fetch_and_arrive(anchor_key: u64, commitment: string, size: i64) -&gt; [u64] {
     anchor_key, commitment, size =&gt; [anchor_key | fetch_and_arrive(anchor_key, commitment, size)]
